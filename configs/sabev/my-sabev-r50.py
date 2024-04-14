@@ -2,7 +2,8 @@ _base_ = ['../_base_/datasets/nus-3d.py', '../_base_/default_runtime.py']
 # Global
 # If point cloud range is changed, the models should also change their point
 # cloud range accordingly
-point_cloud_range = [-51.2, -51.2, -5.0, 51.2, 51.2, 3.0]
+point_cloud_range = [-50, -50, -5, 50, 50, 3]
+voxel_size = [0.25, 0.25, 8]
 # For nuScenes we usually do 10-class detection
 class_names = [
     'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
@@ -41,19 +42,51 @@ bda_aug_conf = dict(
     flip_dx_ratio=0.5,
     flip_dy_ratio=0.5)
 
-voxel_size = [0.1, 0.1, 0.2]
-
 numC_Trans = 80
 
 multi_adj_frame_id_cfg = (1, 1+1, 1)
 
-load_from = '../cascade_mask_rcnn_r50_fpn_coco-20e_20e_nuim_20201009_124951-40963960.pth'
+load_from = 'https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/cascade_mask_rcnn_r50_fpn_coco-20e_20e_nuim/cascade_mask_rcnn_r50_fpn_coco-20e_20e_nuim_20201009_124951-40963960.pth'
 
 model = dict(
-    type='SABEV',
+    type='MySABEV',
     use_bev_paste=True,
     bda_aug_conf=bda_aug_conf,
     num_adj=len(range(*multi_adj_frame_id_cfg)),
+    se=True,
+    lc_fusion=True,
+    camera_stream=True,
+    pts_voxel_layer=dict(
+        max_num_points=20, 
+        point_cloud_range=point_cloud_range,
+        voxel_size=voxel_size, 
+        max_voxels=(30000, 40000)),
+    pts_voxel_encoder=dict(
+        type='PillarFeatureNet',
+        in_channels=5,
+        feat_channels=[64],
+        with_distance=False,
+        voxel_size=(0.2, 0.2, 8),
+        norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.01),
+        legacy=False),
+    pts_middle_encoder=dict(
+        type='PointPillarsScatter', in_channels=64, output_shape=(512, 512)),
+    pts_backbone=dict(
+        type='SECOND',
+        in_channels=64,
+        out_channels=[64, 128, 256],
+        layer_nums=[3, 5, 5],
+        layer_strides=[2, 2, 2],
+        norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01),
+        conv_cfg=dict(type='Conv2d', bias=False)),
+    pts_neck=dict(
+        type='SECONDFPN',
+        in_channels=[64, 128, 256],
+        out_channels=[128, 128, 128],   # TODO 实际输出为[4, 384, 128, 128]，384为三个特征图的叠加，即128 * 3
+        upsample_strides=[0.5, 1, 2],
+        norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01),
+        upsample_cfg=dict(type='deconv', bias=False),
+        use_conv_for_no_stride=True),
     img_backbone=dict(
         pretrained='torchvision://resnet50',
         type='ResNet',
@@ -97,7 +130,7 @@ model = dict(
         backbone_output_ids=[0,]),
     pts_bbox_head=dict(
         type='CenterHead',
-        in_channels=256,
+        in_channels=384,
         tasks=[
             dict(num_class=1, class_names=['car']),
             dict(num_class=2, class_names=['truck', 'construction_vehicle']),
@@ -173,11 +206,17 @@ train_pipeline = [
         type='LoadAnnotationsBEVDepth',
         bda_aug_conf=bda_aug_conf,
         classes=class_names),
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=5,
+        use_dim=5,
+        file_client_args=file_client_args),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectNameFilter', classes=class_names),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(
-        type='Collect3D', keys=['img_inputs', 'gt_bboxes_3d', 'gt_labels_3d',
+        type='Collect3D', keys=['points', 'img_inputs', 'gt_bboxes_3d', 'gt_labels_3d',
                                 'gt_depth', 'gt_semantic'])
 ]
 
@@ -258,15 +297,15 @@ lr_config = dict(
     warmup='linear',
     warmup_iters=200,
     warmup_ratio=0.001,
-    step=[400,])
-runner = dict(type='EpochBasedRunner', max_epochs=400)
+    step=[24,])
+runner = dict(type='EpochBasedRunner', max_epochs=24)
 
 custom_hooks = [
     dict(
         type='MEGVIIEMAHook',
         init_updates=10560,
         priority='NORMAL',
-        resume='work_dirs/save_pth/epoch_47_ema.pth'
+        # resume='work_dirs/save_pth/epoch_47_ema.pth'
     ),
     dict(
         type='SequentialControlHook',
@@ -276,4 +315,4 @@ custom_hooks = [
 
 fp16 = dict(loss_scale='dynamic')
 
-checkpoint_config = dict(interval=100)
+checkpoint_config = dict(interval=10)

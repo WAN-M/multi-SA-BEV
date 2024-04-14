@@ -7,6 +7,68 @@ import torch
 from matplotlib import pyplot as plt
 
 
+def map_pointcloud_to_image(points, 
+                                img,
+                                sensor2lidar_r,
+                                sensor2lidar_t,
+                                camera_intrinsic,
+                                show=False):
+    """
+    Given a point sensor (lidar/radar) token and camera sample_data token, load pointcloud and map it to the image
+    plane.
+    :param pointsensor_token: Lidar/radar sample_data token.
+    :param camera_token: Camera sample_data token.
+    :param min_dist: Distance from the camera below which points are discarded.
+    :param render_intensity: Whether to render lidar intensity instead of point depth.
+    :param show_lidarseg: Whether to render lidar intensity instead of point depth.
+    :param filter_lidarseg_labels: Only show lidar points which belong to the given list of classes. If None
+        or the list is empty, all classes will be displayed.
+    :param lidarseg_preds_bin_path: A path to the .bin file which contains the user's lidar segmentation
+                                    predictions for the sample.
+    :param show_panoptic: When set to True, the lidar data is colored with the panoptic labels. When set
+        to False, the colors of the lidar data represent the distance from the center of the ego vehicle.
+        If show_lidarseg is True, show_panoptic will be set to False.
+    :return (pointcloud <np.float: 2, n)>, coloring <np.float: n>, image <Image>).
+    """
+    points = copy.deepcopy(points.T)
+    translate(points, -sensor2lidar_t)
+    rotate(points, sensor2lidar_r.T)
+    
+    # Fifth step: actually take a "picture" of the point cloud.
+    # Grab the depths (camera frame z axis points away from the camera).
+    depths = points[2, :]
+    coloring = depths
+    # Take the actual picture (matrix multiplication with camera-matrix + renormalization).
+    points = view_points(points[:3, :], camera_intrinsic, normalize=True)
+
+    # Remove points that are either outside or behind the camera. Leave a margin of 1 pixel for aesthetic reasons.
+    # Also make sure points are at least 1m in front of the camera to avoid seeing the lidar points on the camera
+    # casing for non-keyframes which are slightly out of sync.
+    mask = np.ones(depths.shape[0], dtype=bool)
+    mask = np.logical_and(mask, depths > 1.)
+    mask = np.logical_and(mask, points[0, :] > 1)
+    mask = np.logical_and(mask, points[0, :] < img.shape[1] - 1)
+    mask = np.logical_and(mask, points[1, :] > 1)
+    mask = np.logical_and(mask, points[1, :] < img.shape[0] - 1)
+    points = points[:, mask]
+    coloring = coloring[mask]
+    depth_map = np.zeros((img.shape[0], img.shape[1]), dtype=np.float32)
+    xs = np.minimum((points[0,:] + 0.5).astype(np.int32), depth_map.shape[1])
+    ys = np.minimum((points[1,:] + 0.5).astype(np.int32), depth_map.shape[0])
+    for x, y, c in zip(xs, ys, coloring):
+        depth_map[y, x] = c
+    if show:
+        if not os.path.exists('work_dirs'):
+            os.mkdir('work_dirs')
+        plt.imsave('work_dirs/depth_map.png', depth_map, dpi=1)
+        fig, ax = plt.subplots()
+        ax.imshow(img)
+        ax.scatter(points[0, :], points[1, :], c=coloring, s=1)
+        ax.axis('off')
+        fig.savefig('work_dirs/img_depth.png',bbox_inches='tight',pad_inches = 0)
+    return depth_map
+
+
 def project_pts_on_img(points,
                        raw_img,
                        lidar2img_rt,

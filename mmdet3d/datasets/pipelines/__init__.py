@@ -7,7 +7,12 @@ from .loading import (LoadAnnotations3D, LoadAnnotationsBEVDepth,
                       LoadPointsFromDict, LoadPointsFromFile,
                       LoadPointsFromMultiSweeps, NormalizePointsColor,
                       PointSegClassMapping, PointToMultiViewDepth,
-                      PrepareImageInputs)
+                      PrepareImageInputs,
+                      MyResize, MyNormalize, MyPad,
+                      LoadMultiViewImageFromFiles_BF, LoadPointsFromMultiSweeps_BF,
+                      LoadPointsFromMultiSweepsWaymo_BF, 
+                      PointSegClassMapping_BF, NormalizePointsColor_BF,
+                      LoadPointsFromFile_BF, LoadAnnotations3D_BF)
 from .test_time_aug import MultiScaleFlipAug3D
 # yapf: disable
 from .transforms_3d import (AffineResize, BackgroundPointsFilter,

@@ -41,7 +41,7 @@ camera_names = (
 
 def generate(dataroot, save_dir):
     
-    nusc = NuScenes(version='v1.0-trainval', dataroot=dataroot, verbose=False)
+    nusc = NuScenes(version='v1.0-mini', dataroot=dataroot, verbose=False)
     filter_lidarseg_labels = []
     for class_name in filter_lidarseg_classes:
         filter_lidarseg_labels.append(nusc.lidarseg_name2idx_mapping[class_name])
