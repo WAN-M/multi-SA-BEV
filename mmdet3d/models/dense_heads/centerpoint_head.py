@@ -598,6 +598,12 @@ class CenterHead(BaseModule):
         """
         heatmaps, anno_boxes, inds, masks = self.get_targets(
             gt_bboxes_3d, gt_labels_3d)
+        # import numpy as np
+        # import cv2
+        # hm_pred=(preds_dicts[0][0]['heatmap'][0].sigmoid().squeeze().detach().cpu().numpy()*255).astype(np.uint8)
+        # hm_gt=(heatmaps[0][0].sigmoid().squeeze().detach().cpu().numpy()*255).astype(np.uint8)
+        # cv2.imwrite('hm_pred_gt.png', np.concatenate([hm_gt, hm_pred], axis=1))
+        
         loss_dict = dict()
         if not self.task_specific:
             loss_dict['loss'] = 0

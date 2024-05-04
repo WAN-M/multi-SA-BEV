@@ -47,8 +47,6 @@ numC_Trans = 80
 
 multi_adj_frame_id_cfg = (1, 1+1, 1)
 
-load_from = '../cascade_mask_rcnn_r50_fpn_coco-20e_20e_nuim_20201009_124951-40963960.pth'
-
 model = dict(
     type='SABEV',
     use_bev_paste=True,
@@ -258,15 +256,15 @@ lr_config = dict(
     warmup='linear',
     warmup_iters=200,
     warmup_ratio=0.001,
-    step=[400,])
-runner = dict(type='EpochBasedRunner', max_epochs=400)
+    step=[24,])
+runner = dict(type='EpochBasedRunner', max_epochs=24)
 
 custom_hooks = [
     dict(
         type='MEGVIIEMAHook',
         init_updates=10560,
         priority='NORMAL',
-        resume='work_dirs/save_pth/epoch_47_ema.pth'
+        # resume='work_dirs/save_pth/epoch_47_ema.pth'
     ),
     dict(
         type='SequentialControlHook',
@@ -276,4 +274,4 @@ custom_hooks = [
 
 fp16 = dict(loss_scale='dynamic')
 
-checkpoint_config = dict(interval=100)
+log_config = dict(interval=50)

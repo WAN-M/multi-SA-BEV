@@ -8,10 +8,12 @@ from nuscenes import NuScenes
 from nuscenes.eval.detection.config import config_factory
 from nuscenes.eval.detection.evaluate import NuScenesEval
 
+print('enter')
+
 
 file_name = 'n008-2018-08-01-15-16-36-0400__LIDAR_TOP__1533151603547590'
-pwd_root = 'SA-BEV/'
-version = 'v1.0-mini'
+pwd_root = './'
+version = 'v1.0-trainval'
 dataroot = pwd_root + 'data/nuscenes/'
 result_path = pwd_root + 'work_dirs/test/results_eval/pts_bbox/results_nusc.json'
 out_dir = pwd_root + 'work_dirs/test/output/'    # useless
@@ -123,7 +125,7 @@ def test_draw():
         'truck': 'vehicle.truck'
     }
 
-    sample_token="456ec36cb4a44ca78f36fbd90c0c34fa"
+    sample_token="b6b0d9f2f2e14a3aaa2c8aedeb1edb69"
     pred=sabev_preds[sample_token]
     save_dir=save_path
     import shutil
@@ -197,4 +199,5 @@ def test_draw():
         plt.savefig(out_path, bbox_inches='tight', pad_inches=0, dpi=200)
 
 if __name__ == '__main__':
+    print('start drawing')
     test_draw()

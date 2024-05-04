@@ -697,7 +697,7 @@ def lidar_nusc_box_to_global(info,
     box_list = []
     for box in boxes:
         # Move box to ego vehicle coord system
-        box.rotate(pyquaternion.Quaternion(info['lidar2ego_rotation']))
+        box.rottate(pyquaternion.Quaternion(info['lidar2ego_rotation']))
         box.translate(np.array(info['lidar2ego_translation']))
         # filter det in ego.
         cls_range_map = eval_configs.class_range

@@ -2,8 +2,9 @@ _base_ = ['../_base_/datasets/nus-3d.py', '../_base_/default_runtime.py']
 # Global
 # If point cloud range is changed, the models should also change their point
 # cloud range accordingly
-point_cloud_range = [-50, -50, -5, 50, 50, 3]
-voxel_size = [0.25, 0.25, 8]
+point_cloud_range = [-51.2, -51.2, -5, 51.2, 51.2, 3]
+voxel_size = [0.2, 0.2, 8]
+head_voxel_size = [0.1, 0.1, 0.2]
 # For nuScenes we usually do 10-class detection
 class_names = [
     'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
@@ -36,21 +37,29 @@ grid_config = {
     'depth': [1.0, 60.0, 0.5],
 }
 
-bda_aug_conf = dict(
-    rot_lim=(-22.5, 22.5),
-    scale_lim=(0.95, 1.05),
-    flip_dx_ratio=0.5,
-    flip_dy_ratio=0.5)
+use_bda = True
+if use_bda:
+    bda_aug_conf = dict(
+        rot_lim=(-22.5, 22.5),
+        scale_lim=(0.95, 1.05),
+        flip_dx_ratio=0.5,
+        flip_dy_ratio=0.5)
+else:
+    bda_aug_conf = dict(
+        rot_lim=(0, 0),
+        scale_lim=(1, 1),
+        flip_dx_ratio=0,
+        flip_dy_ratio=0)
 
 numC_Trans = 80
 
 multi_adj_frame_id_cfg = (1, 1+1, 1)
 
-load_from = 'https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/cascade_mask_rcnn_r50_fpn_coco-20e_20e_nuim/cascade_mask_rcnn_r50_fpn_coco-20e_20e_nuim_20201009_124951-40963960.pth'
-
+# load_from = 'https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/cascade_mask_rcnn_r50_fpn_coco-20e_20e_nuim/cascade_mask_rcnn_r50_fpn_coco-20e_20e_nuim_20201009_124951-40963960.pth'
+load_from = 'work_dirs/sabev-r50-final/epoch_24_ema.pth'
 model = dict(
     type='MySABEV',
-    use_bev_paste=True,
+    use_bev_paste=False,
     bda_aug_conf=bda_aug_conf,
     num_adj=len(range(*multi_adj_frame_id_cfg)),
     se=True,
@@ -66,7 +75,7 @@ model = dict(
         in_channels=5,
         feat_channels=[64],
         with_distance=False,
-        voxel_size=(0.2, 0.2, 8),
+        voxel_size=voxel_size,
         norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.01),
         legacy=False),
     pts_middle_encoder=dict(
@@ -82,7 +91,7 @@ model = dict(
     pts_neck=dict(
         type='SECONDFPN',
         in_channels=[64, 128, 256],
-        out_channels=[128, 128, 128],   # TODO 实际输出为[4, 384, 128, 128]，384为三个特征图的叠加，即128 * 3
+        out_channels=[128, 128, 128],   # 实际输出为[4, 384, 128, 128]，384为三个特征图的叠加，即128 * 3
         upsample_strides=[0.5, 1, 2],
         norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01),
         upsample_cfg=dict(type='deconv', bias=False),
@@ -149,7 +158,7 @@ model = dict(
             max_num=500,
             score_threshold=0.1,
             out_size_factor=8,
-            voxel_size=voxel_size[:2],
+            voxel_size=head_voxel_size[:2],
             code_size=9),
         separate_head=dict(
             type='SeparateHead', init_bias=-2.19, final_kernel=3),
@@ -161,7 +170,7 @@ model = dict(
         pts=dict(
             point_cloud_range=point_cloud_range,
             grid_size=[1024, 1024, 40],
-            voxel_size=voxel_size,
+            voxel_size=head_voxel_size,
             out_size_factor=8,
             dense_reg=1,
             gaussian_overlap=0.1,
@@ -177,7 +186,7 @@ model = dict(
             min_radius=[4, 12, 10, 1, 0.85, 0.175],
             score_threshold=0.1,
             out_size_factor=8,
-            voxel_size=voxel_size[:2],
+            voxel_size=head_voxel_size[:2],
             pre_max_size=1000,
             post_max_size=83,
 
@@ -211,7 +220,9 @@ train_pipeline = [
         coord_type='LIDAR',
         load_dim=5,
         use_dim=5,
-        file_client_args=file_client_args),
+        file_client_args=file_client_args,
+        trans_ego=True,
+        use_bda=True),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectNameFilter', classes=class_names),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
@@ -235,7 +246,8 @@ test_pipeline = [
         coord_type='LIDAR',
         load_dim=5,
         use_dim=5,
-        file_client_args=file_client_args),
+        file_client_args=file_client_args,
+        trans_ego=True),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),
@@ -251,7 +263,7 @@ test_pipeline = [
 ]
 
 input_modality = dict(
-    use_lidar=False,
+    use_lidar=True,
     use_camera=True,
     use_radar=False,
     use_map=False,
@@ -267,14 +279,14 @@ share_data_config = dict(
 
 test_data_config = dict(
     pipeline=test_pipeline,
-    ann_file=data_root + 'bevdetv2-nuscenes_infos_val.pkl')
+    ann_file=data_root + 'bevdetv2-nuscenes-mini_infos_val.pkl')
 
 data = dict(
     samples_per_gpu=4,
     workers_per_gpu=4,
     train=dict(
         data_root=data_root,
-        ann_file=data_root + 'bevdetv2-nuscenes_infos_train.pkl',
+        ann_file=data_root + 'bevdetv2-nuscenes-mini_infos_train.pkl',
         pipeline=train_pipeline,
         classes=class_names,
         test_mode=False,
@@ -290,14 +302,15 @@ for key in ['val', 'test']:
 data['train'].update(share_data_config)
 
 # Optimizer
-optimizer = dict(type='AdamW', lr=2e-4, weight_decay=1e-2)
+optimizer = dict(type='AdamW', lr=1e-4, weight_decay=1e-2)
 optimizer_config = dict(grad_clip=dict(max_norm=5, norm_type=2))
 lr_config = dict(
     policy='step',
     warmup='linear',
     warmup_iters=200,
     warmup_ratio=0.001,
-    step=[24,])
+    gamma=0.5,
+    step=[5,])
 runner = dict(type='EpochBasedRunner', max_epochs=24)
 
 custom_hooks = [
@@ -305,7 +318,7 @@ custom_hooks = [
         type='MEGVIIEMAHook',
         init_updates=10560,
         priority='NORMAL',
-        # resume='work_dirs/save_pth/epoch_47_ema.pth'
+        # resume='work_dirs/my-sabev-r50/epoch_24_ema.pth'
     ),
     dict(
         type='SequentialControlHook',
@@ -315,4 +328,6 @@ custom_hooks = [
 
 fp16 = dict(loss_scale='dynamic')
 
-checkpoint_config = dict(interval=10)
+# checkpoint_config = dict(interval=10)
+
+log_config = dict(interval=50)

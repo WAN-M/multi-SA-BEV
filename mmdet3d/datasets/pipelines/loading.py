@@ -379,7 +379,9 @@ class LoadPointsFromFile(object):
                  use_dim=[0, 1, 2],
                  shift_height=False,
                  use_color=False,
-                 file_client_args=dict(backend='disk')):
+                 file_client_args=dict(backend='disk'),
+                 trans_ego=False,
+                 use_bda=False):
         self.shift_height = shift_height
         self.use_color = use_color
         if isinstance(use_dim, int):
@@ -393,6 +395,8 @@ class LoadPointsFromFile(object):
         self.use_dim = use_dim
         self.file_client_args = file_client_args.copy()
         self.file_client = None
+        self.trans_ego = trans_ego
+        self.use_bda = use_bda
 
     def _load_points(self, pts_filename):
         """Private function to load point clouds data.
@@ -415,7 +419,60 @@ class LoadPointsFromFile(object):
             else:
                 points = np.fromfile(pts_filename, dtype=np.float32)
 
+        # segs = np.load()
+
         return points
+
+    def _draw_bev(self, pts_filename, points, corners, prefix):
+        def cal(x, y):
+            return int((x + 51.2) * 10), int((y + 51.2) * 10)
+        
+        import cv2
+        import pathlib
+
+        draw_list = [
+            'n015-2018-07-24-11-22-45+0800__LIDAR_TOP__1532402932197715',
+            'n015-2018-10-02-10-50-40+0800__LIDAR_TOP__1538448761048087'
+        ]
+        
+        file_name = pts_filename.split('/')[-1].split('.')[0]
+        dir = '/gpfsdata/home/huliang/bev/multi-SA-BEV/vis_dirs/points/' + file_name + '/'
+        pathlib.Path(dir).mkdir(parents=True, exist_ok=True)
+
+        # flag = False
+        # for to_draw in draw_list:
+        #     if file_name == to_draw:
+        #         flag = True
+        #         break
+        # if not flag:
+        #     return
+
+        img = np.zeros((1024, 1024, 3), dtype=np.uint8)
+        
+        for point in points:
+            x, y = cal(*point)
+            cv2.circle(img, (x, y), radius=1, color=(255, 255, 255), thickness=-1)
+
+        color=(0,0,255)
+        for corner in corners:
+            corner = np.array(corner[:, :2])
+            corner = [(cal(x, y)) for x, y in corner]
+            cv2.line(img, corner[0], corner[2], color, 1)
+            cv2.line(img, corner[2], corner[6], color, 1)
+            cv2.line(img, corner[6], corner[4], color, 1)
+            cv2.line(img, corner[4], corner[0], color, 1)
+        
+        cv2.imwrite(dir + prefix + 'points_image.png', img)
+
+    def quaternion_to_rotation_matrix(self, q):
+        # q 是一个包含四元数 [w, x, y, z] 值的列表或元组
+        w, x, y, z = q
+        return np.array([
+            [1 - 2*y**2 - 2*z**2,     2*x*y - 2*z*w,     2*x*z + 2*y*w],
+            [2*x*y + 2*z*w,     1 - 2*x**2 - 2*z**2,     2*y*z - 2*x*w],
+            [2*x*z - 2*y*w,     2*y*z + 2*x*w,     1 - 2*x**2 - 2*y**2]
+        ])
+        
 
     def __call__(self, results):
         """Call function to load points data from file.
@@ -457,6 +514,41 @@ class LoadPointsFromFile(object):
         points_class = get_points_type(self.coord_type)
         points = points_class(
             points, points_dim=points.shape[-1], attribute_dims=attribute_dims)
+
+        # self._draw_bev(pts_filename, points.bev, results['gt_bboxes_3d'].corners, 'ori_')
+
+        if self.coord_type == 'LIDAR':
+            translation = results['curr']['lidar2ego_translation']
+            rotation = results['curr']['lidar2ego_rotation']
+            # if rotation[3] < 0:
+            #     rotation[3] = -rotation[3]
+            rotate_matrix = Quaternion(rotation).rotation_matrix.T
+            points.rotate(rotate_matrix)
+            points.translate(np.array(translation))
+            # translation = results['curr']['ego2global_translation']
+            # rotation = results['curr']['ego2global_rotation']
+            # points.rotate(Quaternion(rotation).rotation_matrix)
+            # points.translate(np.array(translation))
+
+        if self.use_bda:
+            self._draw_bev(pts_filename, points.bev, results['gt_bboxes_3d'].corners, 'pre_')
+            bda_info = results['bda_info']
+            flip_dx = bda_info['flip_dx']
+            flip_dy = bda_info['flip_dy']
+            scale_bda = bda_info['scale_bda']
+            rotate_bda = bda_info['rotate_bda']
+            bda_rot = bda_info['bda_rot']
+
+            # if flip_dx:
+            #     points.flip('horizontal')
+            # if flip_dy:
+            #     points.flip('vertical')
+            # points.scale(scale_bda)
+            # points.rotate(rotate_bda)
+            points.rotate(bda_rot)
+        
+        self._draw_bev(pts_filename, points.bev, results['gt_bboxes_3d'].corners, 'bda_')
+
         results['points'] = points
 
         return results
@@ -1200,6 +1292,13 @@ class LoadAnnotationsBEVDepth(object):
         post_rots, post_trans = results['img_inputs'][4:]
         results['img_inputs'] = (imgs, rots, trans, intrins, post_rots,
                                  post_trans, bda_rot)
+        results['bda_info'] = {
+            'rotate_bda': rotate_bda,
+            'scale_bda': scale_bda,
+            'flip_dx': flip_dx,
+            'flip_dy': flip_dy,
+            'bda_rot': bda_rot,
+        }
         return results
 
 @PIPELINES.register_module()

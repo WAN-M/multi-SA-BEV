@@ -5,6 +5,7 @@ import copy
 import os
 import time
 import warnings
+warnings.filterwarnings("ignore")
 from os import path as osp
 
 import mmcv

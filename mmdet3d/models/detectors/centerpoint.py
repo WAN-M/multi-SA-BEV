@@ -75,6 +75,10 @@ class CenterPoint(MVXTwoStageDetector):
             dict: Losses of each branch.
         """
         outs = self.pts_bbox_head(pts_feats)
+        # import numpy as np
+        # import cv2
+        # hm=(outs[0][0]['heatmap'][0].sigmoid().squeeze().detach().cpu().numpy()*255).astype(np.uint8)
+        # cv2.imwrite('train_hm.png', hm)
         loss_inputs = [gt_bboxes_3d, gt_labels_3d, outs]
         losses = self.pts_bbox_head.loss(*loss_inputs)
         return losses
@@ -82,6 +86,10 @@ class CenterPoint(MVXTwoStageDetector):
     def simple_test_pts(self, x, img_metas, rescale=False):
         """Test function of point cloud branch."""
         outs = self.pts_bbox_head(x)
+        # import numpy as np
+        # import cv2
+        # hm=(outs[0][0]['heatmap'].sigmoid().squeeze().cpu().numpy()*255).astype(np.uint8)
+        # cv2.imwrite('test_hm.png', hm)
         bbox_list = self.pts_bbox_head.get_bboxes(
             outs, img_metas, rescale=rescale)
         bbox_results = [
