@@ -56,7 +56,7 @@ numC_Trans = 80
 multi_adj_frame_id_cfg = (1, 1+1, 1)
 
 # load_from = 'https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/cascade_mask_rcnn_r50_fpn_coco-20e_20e_nuim/cascade_mask_rcnn_r50_fpn_coco-20e_20e_nuim_20201009_124951-40963960.pth'
-load_from = 'work_dirs/sabev-r50-final/epoch_24_ema.pth'
+load_from = 'work_dirs/sabev-r50/epoch_24_ema.pth'
 model = dict(
     type='MySABEV',
     use_bev_paste=False,

@@ -545,7 +545,7 @@ class LoadPointsFromFile(object):
             #     points.flip('vertical')
             # points.scale(scale_bda)
             # points.rotate(rotate_bda)
-            points.rotate(bda_rot)
+            points.rotate(bda_rot.T)
         
         self._draw_bev(pts_filename, points.bev, results['gt_bboxes_3d'].corners, 'bda_')
 

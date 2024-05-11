@@ -1,0 +1,1658 @@
+/gpfsdata/home/huliang/anaconda3/envs/multi/lib/python3.8/site-packages/torch/distributed/launch.py:178: FutureWarning: The module torch.distributed.launch is deprecated
+and will be removed in future. Use torchrun.
+Note that --use_env is set by default in torchrun.
+If your script expects `--local_rank` argument to be set, please
+change it to read from `os.environ['LOCAL_RANK']` instead. See 
+https://pytorch.org/docs/stable/distributed.html#launch-utility for 
+further instructions
+
+  warnings.warn(
+WARNING:torch.distributed.run:
+*****************************************
+Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+*****************************************
+2024-05-11 14:14:23,059 - mmdet - INFO - Environment info:
+------------------------------------------------------------
+sys.platform: linux
+Python: 3.8.19 (default, Mar 20 2024, 19:58:24) [GCC 11.2.0]
+CUDA available: True
+GPU 0,1,2,3,4,5,6,7: GeForce RTX 2080 Ti
+CUDA_HOME: /gpfsdata/apps/cuda/11.3
+NVCC: Cuda compilation tools, release 11.3, V11.3.58
+GCC: gcc (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0
+PyTorch: 1.10.0+cu111
+PyTorch compiling details: PyTorch built with:
+  - GCC 7.3
+  - C++ Version: 201402
+  - Intel(R) Math Kernel Library Version 2020.0.0 Product Build 20191122 for Intel(R) 64 architecture applications
+  - Intel(R) MKL-DNN v2.2.3 (Git Hash 7336ca9f055cf1bfa13efb658fe15dc9b41f0740)
+  - OpenMP 201511 (a.k.a. OpenMP 4.5)
+  - LAPACK is enabled (usually provided by MKL)
+  - NNPACK is enabled
+  - CPU capability usage: AVX512
+  - CUDA Runtime 11.1
+  - NVCC architecture flags: -gencode;arch=compute_37,code=sm_37;-gencode;arch=compute_50,code=sm_50;-gencode;arch=compute_60,code=sm_60;-gencode;arch=compute_70,code=sm_70;-gencode;arch=compute_75,code=sm_75;-gencode;arch=compute_80,code=sm_80;-gencode;arch=compute_86,code=sm_86
+  - CuDNN 8.0.5
+  - Magma 2.5.2
+  - Build settings: BLAS_INFO=mkl, BUILD_TYPE=Release, CUDA_VERSION=11.1, CUDNN_VERSION=8.0.5, CXX_COMPILER=/opt/rh/devtoolset-7/root/usr/bin/c++, CXX_FLAGS= -Wno-deprecated -fvisibility-inlines-hidden -DUSE_PTHREADPOOL -fopenmp -DNDEBUG -DUSE_KINETO -DUSE_FBGEMM -DUSE_QNNPACK -DUSE_PYTORCH_QNNPACK -DUSE_XNNPACK -DSYMBOLICATE_MOBILE_DEBUG_HANDLE -DEDGE_PROFILER_USE_KINETO -O2 -fPIC -Wno-narrowing -Wall -Wextra -Werror=return-type -Wno-missing-field-initializers -Wno-type-limits -Wno-array-bounds -Wno-unknown-pragmas -Wno-sign-compare -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-local-typedefs -Wno-strict-overflow -Wno-strict-aliasing -Wno-error=deprecated-declarations -Wno-stringop-overflow -Wno-psabi -Wno-error=pedantic -Wno-error=redundant-decls -Wno-error=old-style-cast -fdiagnostics-color=always -faligned-new -Wno-unused-but-set-variable -Wno-maybe-uninitialized -fno-math-errno -fno-trapping-math -Werror=format -Wno-stringop-overflow, LAPACK_INFO=mkl, PERF_WITH_AVX=1, PERF_WITH_AVX2=1, PERF_WITH_AVX512=1, TORCH_VERSION=1.10.0, USE_CUDA=ON, USE_CUDNN=ON, USE_EXCEPTION_PTR=1, USE_GFLAGS=OFF, USE_GLOG=OFF, USE_MKL=ON, USE_MKLDNN=ON, USE_MPI=OFF, USE_NCCL=ON, USE_NNPACK=ON, USE_OPENMP=ON, 
+
+TorchVision: 0.11.0+cu111
+OpenCV: 4.9.0
+MMCV: 1.5.3
+MMCV Compiler: GCC 7.5
+MMCV CUDA Compiler: 11.3
+MMDetection: 2.27.0
+MMSegmentation: 0.25.0
+MMDetection3D: 1.0.0rc4+4776f8f
+spconv2.0: False
+------------------------------------------------------------
+
+2024-05-11 14:14:24,845 - mmdet - INFO - Distributed training: True
+2024-05-11 14:14:26,367 - mmdet - INFO - Config:
+point_cloud_range = [-51.2, -51.2, -5, 51.2, 51.2, 3]
+class_names = [
+    'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
+    'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
+]
+dataset_type = 'NuScenesDataset'
+data_root = 'data/nuscenes/'
+input_modality = dict(
+    use_lidar=True,
+    use_camera=True,
+    use_radar=False,
+    use_map=False,
+    use_external=False)
+file_client_args = dict(backend='disk')
+train_pipeline = [
+    dict(
+        type='PrepareImageInputs',
+        is_train=True,
+        load_point_label=True,
+        data_config=dict(
+            cams=[
+                'CAM_FRONT_LEFT', 'CAM_FRONT', 'CAM_FRONT_RIGHT',
+                'CAM_BACK_LEFT', 'CAM_BACK', 'CAM_BACK_RIGHT'
+            ],
+            Ncams=6,
+            input_size=(256, 704),
+            src_size=(900, 1600),
+            resize=(-0.06, 0.11),
+            rot=(-5.4, 5.4),
+            flip=True,
+            crop_h=(0.0, 0.0),
+            resize_test=0.0),
+        sequential=True),
+    dict(
+        type='LoadAnnotationsBEVDepth',
+        bda_aug_conf=dict(
+            rot_lim=(-22.5, 22.5),
+            scale_lim=(0.95, 1.05),
+            flip_dx_ratio=0.5,
+            flip_dy_ratio=0.5),
+        classes=[
+            'car', 'truck', 'construction_vehicle', 'bus', 'trailer',
+            'barrier', 'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
+        ]),
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=5,
+        use_dim=5,
+        file_client_args=dict(backend='disk'),
+        trans_ego=True,
+        use_bda=True),
+    dict(
+        type='ObjectRangeFilter',
+        point_cloud_range=[-51.2, -51.2, -5, 51.2, 51.2, 3]),
+    dict(
+        type='ObjectNameFilter',
+        classes=[
+            'car', 'truck', 'construction_vehicle', 'bus', 'trailer',
+            'barrier', 'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
+        ]),
+    dict(
+        type='DefaultFormatBundle3D',
+        class_names=[
+            'car', 'truck', 'construction_vehicle', 'bus', 'trailer',
+            'barrier', 'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
+        ]),
+    dict(
+        type='Collect3D',
+        keys=[
+            'points', 'img_inputs', 'gt_bboxes_3d', 'gt_labels_3d', 'gt_depth',
+            'gt_semantic'
+        ])
+]
+test_pipeline = [
+    dict(
+        type='PrepareImageInputs',
+        data_config=dict(
+            cams=[
+                'CAM_FRONT_LEFT', 'CAM_FRONT', 'CAM_FRONT_RIGHT',
+                'CAM_BACK_LEFT', 'CAM_BACK', 'CAM_BACK_RIGHT'
+            ],
+            Ncams=6,
+            input_size=(256, 704),
+            src_size=(900, 1600),
+            resize=(-0.06, 0.11),
+            rot=(-5.4, 5.4),
+            flip=True,
+            crop_h=(0.0, 0.0),
+            resize_test=0.0),
+        sequential=True),
+    dict(
+        type='LoadAnnotationsBEVDepth',
+        bda_aug_conf=dict(
+            rot_lim=(-22.5, 22.5),
+            scale_lim=(0.95, 1.05),
+            flip_dx_ratio=0.5,
+            flip_dy_ratio=0.5),
+        classes=[
+            'car', 'truck', 'construction_vehicle', 'bus', 'trailer',
+            'barrier', 'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
+        ],
+        is_train=False),
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=5,
+        use_dim=5,
+        file_client_args=dict(backend='disk'),
+        trans_ego=True),
+    dict(
+        type='MultiScaleFlipAug3D',
+        img_scale=(1333, 800),
+        pts_scale_ratio=1,
+        flip=False,
+        transforms=[
+            dict(
+                type='DefaultFormatBundle3D',
+                class_names=[
+                    'car', 'truck', 'construction_vehicle', 'bus', 'trailer',
+                    'barrier', 'motorcycle', 'bicycle', 'pedestrian',
+                    'traffic_cone'
+                ],
+                with_label=False),
+            dict(type='Collect3D', keys=['points', 'img_inputs'])
+        ])
+]
+eval_pipeline = [
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=5,
+        use_dim=5,
+        file_client_args=dict(backend='disk')),
+    dict(
+        type='LoadPointsFromMultiSweeps',
+        sweeps_num=10,
+        file_client_args=dict(backend='disk')),
+    dict(
+        type='DefaultFormatBundle3D',
+        class_names=[
+            'car', 'truck', 'trailer', 'bus', 'construction_vehicle',
+            'bicycle', 'motorcycle', 'pedestrian', 'traffic_cone', 'barrier'
+        ],
+        with_label=False),
+    dict(type='Collect3D', keys=['points'])
+]
+data = dict(
+    samples_per_gpu=4,
+    workers_per_gpu=4,
+    train=dict(
+        type='NuScenesDataset',
+        data_root='data/nuscenes/',
+        ann_file='data/nuscenes/bevdetv2-nuscenes-mini_infos_train.pkl',
+        pipeline=[
+            dict(
+                type='PrepareImageInputs',
+                is_train=True,
+                load_point_label=True,
+                data_config=dict(
+                    cams=[
+                        'CAM_FRONT_LEFT', 'CAM_FRONT', 'CAM_FRONT_RIGHT',
+                        'CAM_BACK_LEFT', 'CAM_BACK', 'CAM_BACK_RIGHT'
+                    ],
+                    Ncams=6,
+                    input_size=(256, 704),
+                    src_size=(900, 1600),
+                    resize=(-0.06, 0.11),
+                    rot=(-5.4, 5.4),
+                    flip=True,
+                    crop_h=(0.0, 0.0),
+                    resize_test=0.0),
+                sequential=True),
+            dict(
+                type='LoadAnnotationsBEVDepth',
+                bda_aug_conf=dict(
+                    rot_lim=(-22.5, 22.5),
+                    scale_lim=(0.95, 1.05),
+                    flip_dx_ratio=0.5,
+                    flip_dy_ratio=0.5),
+                classes=[
+                    'car', 'truck', 'construction_vehicle', 'bus', 'trailer',
+                    'barrier', 'motorcycle', 'bicycle', 'pedestrian',
+                    'traffic_cone'
+                ]),
+            dict(
+                type='LoadPointsFromFile',
+                coord_type='LIDAR',
+                load_dim=5,
+                use_dim=5,
+                file_client_args=dict(backend='disk'),
+                trans_ego=True,
+                use_bda=True),
+            dict(
+                type='ObjectRangeFilter',
+                point_cloud_range=[-51.2, -51.2, -5, 51.2, 51.2, 3]),
+            dict(
+                type='ObjectNameFilter',
+                classes=[
+                    'car', 'truck', 'construction_vehicle', 'bus', 'trailer',
+                    'barrier', 'motorcycle', 'bicycle', 'pedestrian',
+                    'traffic_cone'
+                ]),
+            dict(
+                type='DefaultFormatBundle3D',
+                class_names=[
+                    'car', 'truck', 'construction_vehicle', 'bus', 'trailer',
+                    'barrier', 'motorcycle', 'bicycle', 'pedestrian',
+                    'traffic_cone'
+                ]),
+            dict(
+                type='Collect3D',
+                keys=[
+                    'points', 'img_inputs', 'gt_bboxes_3d', 'gt_labels_3d',
+                    'gt_depth', 'gt_semantic'
+                ])
+        ],
+        classes=[
+            'car', 'truck', 'construction_vehicle', 'bus', 'trailer',
+            'barrier', 'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
+        ],
+        modality=dict(
+            use_lidar=True,
+            use_camera=True,
+            use_radar=False,
+            use_map=False,
+            use_external=False),
+        test_mode=False,
+        box_type_3d='LiDAR',
+        use_valid_flag=True,
+        img_info_prototype='bevdet4d',
+        multi_adj_frame_id_cfg=(1, 2, 1)),
+    val=dict(
+        type='NuScenesDataset',
+        data_root='data/nuscenes/',
+        ann_file='data/nuscenes/bevdetv2-nuscenes-mini_infos_val.pkl',
+        pipeline=[
+            dict(
+                type='PrepareImageInputs',
+                data_config=dict(
+                    cams=[
+                        'CAM_FRONT_LEFT', 'CAM_FRONT', 'CAM_FRONT_RIGHT',
+                        'CAM_BACK_LEFT', 'CAM_BACK', 'CAM_BACK_RIGHT'
+                    ],
+                    Ncams=6,
+                    input_size=(256, 704),
+                    src_size=(900, 1600),
+                    resize=(-0.06, 0.11),
+                    rot=(-5.4, 5.4),
+                    flip=True,
+                    crop_h=(0.0, 0.0),
+                    resize_test=0.0),
+                sequential=True),
+            dict(
+                type='LoadAnnotationsBEVDepth',
+                bda_aug_conf=dict(
+                    rot_lim=(-22.5, 22.5),
+                    scale_lim=(0.95, 1.05),
+                    flip_dx_ratio=0.5,
+                    flip_dy_ratio=0.5),
+                classes=[
+                    'car', 'truck', 'construction_vehicle', 'bus', 'trailer',
+                    'barrier', 'motorcycle', 'bicycle', 'pedestrian',
+                    'traffic_cone'
+                ],
+                is_train=False),
+            dict(
+                type='LoadPointsFromFile',
+                coord_type='LIDAR',
+                load_dim=5,
+                use_dim=5,
+                file_client_args=dict(backend='disk'),
+                trans_ego=True),
+            dict(
+                type='MultiScaleFlipAug3D',
+                img_scale=(1333, 800),
+                pts_scale_ratio=1,
+                flip=False,
+                transforms=[
+                    dict(
+                        type='DefaultFormatBundle3D',
+                        class_names=[
+                            'car', 'truck', 'construction_vehicle', 'bus',
+                            'trailer', 'barrier', 'motorcycle', 'bicycle',
+                            'pedestrian', 'traffic_cone'
+                        ],
+                        with_label=False),
+                    dict(type='Collect3D', keys=['points', 'img_inputs'])
+                ])
+        ],
+        classes=[
+            'car', 'truck', 'construction_vehicle', 'bus', 'trailer',
+            'barrier', 'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
+        ],
+        modality=dict(
+            use_lidar=True,
+            use_camera=True,
+            use_radar=False,
+            use_map=False,
+            use_external=False),
+        test_mode=True,
+        box_type_3d='LiDAR',
+        img_info_prototype='bevdet4d',
+        multi_adj_frame_id_cfg=(1, 2, 1)),
+    test=dict(
+        type='NuScenesDataset',
+        data_root='data/nuscenes/',
+        ann_file='data/nuscenes/bevdetv2-nuscenes-mini_infos_val.pkl',
+        pipeline=[
+            dict(
+                type='PrepareImageInputs',
+                data_config=dict(
+                    cams=[
+                        'CAM_FRONT_LEFT', 'CAM_FRONT', 'CAM_FRONT_RIGHT',
+                        'CAM_BACK_LEFT', 'CAM_BACK', 'CAM_BACK_RIGHT'
+                    ],
+                    Ncams=6,
+                    input_size=(256, 704),
+                    src_size=(900, 1600),
+                    resize=(-0.06, 0.11),
+                    rot=(-5.4, 5.4),
+                    flip=True,
+                    crop_h=(0.0, 0.0),
+                    resize_test=0.0),
+                sequential=True),
+            dict(
+                type='LoadAnnotationsBEVDepth',
+                bda_aug_conf=dict(
+                    rot_lim=(-22.5, 22.5),
+                    scale_lim=(0.95, 1.05),
+                    flip_dx_ratio=0.5,
+                    flip_dy_ratio=0.5),
+                classes=[
+                    'car', 'truck', 'construction_vehicle', 'bus', 'trailer',
+                    'barrier', 'motorcycle', 'bicycle', 'pedestrian',
+                    'traffic_cone'
+                ],
+                is_train=False),
+            dict(
+                type='LoadPointsFromFile',
+                coord_type='LIDAR',
+                load_dim=5,
+                use_dim=5,
+                file_client_args=dict(backend='disk'),
+                trans_ego=True),
+            dict(
+                type='MultiScaleFlipAug3D',
+                img_scale=(1333, 800),
+                pts_scale_ratio=1,
+                flip=False,
+                transforms=[
+                    dict(
+                        type='DefaultFormatBundle3D',
+                        class_names=[
+                            'car', 'truck', 'construction_vehicle', 'bus',
+                            'trailer', 'barrier', 'motorcycle', 'bicycle',
+                            'pedestrian', 'traffic_cone'
+                        ],
+                        with_label=False),
+                    dict(type='Collect3D', keys=['points', 'img_inputs'])
+                ])
+        ],
+        classes=[
+            'car', 'truck', 'construction_vehicle', 'bus', 'trailer',
+            'barrier', 'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
+        ],
+        modality=dict(
+            use_lidar=True,
+            use_camera=True,
+            use_radar=False,
+            use_map=False,
+            use_external=False),
+        test_mode=True,
+        box_type_3d='LiDAR',
+        img_info_prototype='bevdet4d',
+        multi_adj_frame_id_cfg=(1, 2, 1)))
+evaluation = dict(
+    interval=24,
+    pipeline=[
+        dict(
+            type='LoadPointsFromFile',
+            coord_type='LIDAR',
+            load_dim=5,
+            use_dim=5,
+            file_client_args=dict(backend='disk')),
+        dict(
+            type='LoadPointsFromMultiSweeps',
+            sweeps_num=10,
+            file_client_args=dict(backend='disk')),
+        dict(
+            type='DefaultFormatBundle3D',
+            class_names=[
+                'car', 'truck', 'trailer', 'bus', 'construction_vehicle',
+                'bicycle', 'motorcycle', 'pedestrian', 'traffic_cone',
+                'barrier'
+            ],
+            with_label=False),
+        dict(type='Collect3D', keys=['points'])
+    ])
+checkpoint_config = dict(interval=1)
+log_config = dict(
+    interval=50,
+    hooks=[dict(type='TextLoggerHook'),
+           dict(type='TensorboardLoggerHook')])
+dist_params = dict(backend='nccl')
+log_level = 'INFO'
+work_dir = './work_dirs/my-sabev-r50'
+load_from = 'work_dirs/sabev-r50/epoch_24_ema.pth'
+resume_from = None
+workflow = [('train', 1)]
+opencv_num_threads = 0
+mp_start_method = 'fork'
+voxel_size = [0.2, 0.2, 8]
+head_voxel_size = [0.1, 0.1, 0.2]
+data_config = dict(
+    cams=[
+        'CAM_FRONT_LEFT', 'CAM_FRONT', 'CAM_FRONT_RIGHT', 'CAM_BACK_LEFT',
+        'CAM_BACK', 'CAM_BACK_RIGHT'
+    ],
+    Ncams=6,
+    input_size=(256, 704),
+    src_size=(900, 1600),
+    resize=(-0.06, 0.11),
+    rot=(-5.4, 5.4),
+    flip=True,
+    crop_h=(0.0, 0.0),
+    resize_test=0.0)
+grid_config = dict(
+    x=[-51.2, 51.2, 0.8],
+    y=[-51.2, 51.2, 0.8],
+    z=[-5, 3, 8],
+    depth=[1.0, 60.0, 0.5])
+use_bda = True
+bda_aug_conf = dict(
+    rot_lim=(-22.5, 22.5),
+    scale_lim=(0.95, 1.05),
+    flip_dx_ratio=0.5,
+    flip_dy_ratio=0.5)
+numC_Trans = 80
+multi_adj_frame_id_cfg = (1, 2, 1)
+model = dict(
+    type='MySABEV',
+    use_bev_paste=False,
+    bda_aug_conf=dict(
+        rot_lim=(-22.5, 22.5),
+        scale_lim=(0.95, 1.05),
+        flip_dx_ratio=0.5,
+        flip_dy_ratio=0.5),
+    num_adj=1,
+    se=True,
+    lc_fusion=True,
+    camera_stream=True,
+    pts_voxel_layer=dict(
+        max_num_points=20,
+        point_cloud_range=[-51.2, -51.2, -5, 51.2, 51.2, 3],
+        voxel_size=[0.2, 0.2, 8],
+        max_voxels=(30000, 40000)),
+    pts_voxel_encoder=dict(
+        type='PillarFeatureNet',
+        in_channels=5,
+        feat_channels=[64],
+        with_distance=False,
+        voxel_size=[0.2, 0.2, 8],
+        norm_cfg=dict(type='BN1d', eps=0.001, momentum=0.01),
+        legacy=False),
+    pts_middle_encoder=dict(
+        type='PointPillarsScatter', in_channels=64, output_shape=(512, 512)),
+    pts_backbone=dict(
+        type='SECOND',
+        in_channels=64,
+        out_channels=[64, 128, 256],
+        layer_nums=[3, 5, 5],
+        layer_strides=[2, 2, 2],
+        norm_cfg=dict(type='BN', eps=0.001, momentum=0.01),
+        conv_cfg=dict(type='Conv2d', bias=False)),
+    pts_neck=dict(
+        type='SECONDFPN',
+        in_channels=[64, 128, 256],
+        out_channels=[128, 128, 128],
+        upsample_strides=[0.5, 1, 2],
+        norm_cfg=dict(type='BN', eps=0.001, momentum=0.01),
+        upsample_cfg=dict(type='deconv', bias=False),
+        use_conv_for_no_stride=True),
+    img_backbone=dict(
+        pretrained='torchvision://resnet50',
+        type='ResNet',
+        depth=50,
+        num_stages=4,
+        out_indices=(1, 2, 3),
+        frozen_stages=-1,
+        norm_cfg=dict(type='BN', requires_grad=True),
+        norm_eval=False,
+        with_cp=True,
+        style='pytorch'),
+    img_neck=dict(
+        type='CustomFPN',
+        in_channels=[1024, 2048],
+        out_channels=512,
+        num_outs=1,
+        start_level=0,
+        out_ids=[0]),
+    img_view_transformer=dict(
+        type='SABEVPool',
+        grid_config=dict(
+            x=[-51.2, 51.2, 0.8],
+            y=[-51.2, 51.2, 0.8],
+            z=[-5, 3, 8],
+            depth=[1.0, 60.0, 0.5]),
+        input_size=(256, 704),
+        in_channels=512,
+        out_channels=80,
+        depthnet_cfg=dict(use_dcn=False),
+        downsample=16),
+    img_bev_encoder_backbone=dict(
+        type='CustomResNet', numC_input=160, num_channels=[160, 320, 640]),
+    img_bev_encoder_neck=dict(
+        type='FPN_LSS', in_channels=800, out_channels=256),
+    pre_process=dict(
+        type='CustomResNet',
+        numC_input=80,
+        num_layer=[2],
+        num_channels=[80],
+        stride=[1],
+        backbone_output_ids=[0]),
+    pts_bbox_head=dict(
+        type='CenterHead',
+        in_channels=384,
+        tasks=[
+            dict(num_class=1, class_names=['car']),
+            dict(num_class=2, class_names=['truck', 'construction_vehicle']),
+            dict(num_class=2, class_names=['bus', 'trailer']),
+            dict(num_class=1, class_names=['barrier']),
+            dict(num_class=2, class_names=['motorcycle', 'bicycle']),
+            dict(num_class=2, class_names=['pedestrian', 'traffic_cone'])
+        ],
+        common_heads=dict(
+            reg=(2, 2), height=(1, 2), dim=(3, 2), rot=(2, 2), vel=(2, 2)),
+        share_conv_channel=64,
+        bbox_coder=dict(
+            type='CenterPointBBoxCoder',
+            pc_range=[-51.2, -51.2],
+            post_center_range=[-61.2, -61.2, -10.0, 61.2, 61.2, 10.0],
+            max_num=500,
+            score_threshold=0.1,
+            out_size_factor=8,
+            voxel_size=[0.1, 0.1],
+            code_size=9),
+        separate_head=dict(
+            type='SeparateHead', init_bias=-2.19, final_kernel=3),
+        loss_cls=dict(type='GaussianFocalLoss', reduction='mean'),
+        loss_bbox=dict(type='L1Loss', reduction='mean', loss_weight=0.25),
+        norm_bbox=True),
+    train_cfg=dict(
+        pts=dict(
+            point_cloud_range=[-51.2, -51.2, -5, 51.2, 51.2, 3],
+            grid_size=[1024, 1024, 40],
+            voxel_size=[0.1, 0.1, 0.2],
+            out_size_factor=8,
+            dense_reg=1,
+            gaussian_overlap=0.1,
+            max_objs=500,
+            min_radius=2,
+            code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])),
+    test_cfg=dict(
+        pts=dict(
+            pc_range=[-51.2, -51.2],
+            post_center_limit_range=[-61.2, -61.2, -10.0, 61.2, 61.2, 10.0],
+            max_per_img=500,
+            max_pool_nms=False,
+            min_radius=[4, 12, 10, 1, 0.85, 0.175],
+            score_threshold=0.1,
+            out_size_factor=8,
+            voxel_size=[0.1, 0.1],
+            pre_max_size=1000,
+            post_max_size=83,
+            nms_type=[
+                'rotate', 'rotate', 'rotate', 'circle', 'rotate', 'rotate'
+            ],
+            nms_thr=[0.2, 0.2, 0.2, 0.2, 0.2, 0.5],
+            nms_rescale_factor=[
+                1.0, [0.7, 0.7], [0.4, 0.55], 1.1, [1.0, 1.0], [4.5, 9.0]
+            ])))
+share_data_config = dict(
+    type='NuScenesDataset',
+    classes=[
+        'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
+        'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
+    ],
+    modality=dict(
+        use_lidar=True,
+        use_camera=True,
+        use_radar=False,
+        use_map=False,
+        use_external=False),
+    img_info_prototype='bevdet4d',
+    multi_adj_frame_id_cfg=(1, 2, 1))
+test_data_config = dict(
+    pipeline=[
+        dict(
+            type='PrepareImageInputs',
+            data_config=dict(
+                cams=[
+                    'CAM_FRONT_LEFT', 'CAM_FRONT', 'CAM_FRONT_RIGHT',
+                    'CAM_BACK_LEFT', 'CAM_BACK', 'CAM_BACK_RIGHT'
+                ],
+                Ncams=6,
+                input_size=(256, 704),
+                src_size=(900, 1600),
+                resize=(-0.06, 0.11),
+                rot=(-5.4, 5.4),
+                flip=True,
+                crop_h=(0.0, 0.0),
+                resize_test=0.0),
+            sequential=True),
+        dict(
+            type='LoadAnnotationsBEVDepth',
+            bda_aug_conf=dict(
+                rot_lim=(-22.5, 22.5),
+                scale_lim=(0.95, 1.05),
+                flip_dx_ratio=0.5,
+                flip_dy_ratio=0.5),
+            classes=[
+                'car', 'truck', 'construction_vehicle', 'bus', 'trailer',
+                'barrier', 'motorcycle', 'bicycle', 'pedestrian',
+                'traffic_cone'
+            ],
+            is_train=False),
+        dict(
+            type='LoadPointsFromFile',
+            coord_type='LIDAR',
+            load_dim=5,
+            use_dim=5,
+            file_client_args=dict(backend='disk'),
+            trans_ego=True),
+        dict(
+            type='MultiScaleFlipAug3D',
+            img_scale=(1333, 800),
+            pts_scale_ratio=1,
+            flip=False,
+            transforms=[
+                dict(
+                    type='DefaultFormatBundle3D',
+                    class_names=[
+                        'car', 'truck', 'construction_vehicle', 'bus',
+                        'trailer', 'barrier', 'motorcycle', 'bicycle',
+                        'pedestrian', 'traffic_cone'
+                    ],
+                    with_label=False),
+                dict(type='Collect3D', keys=['points', 'img_inputs'])
+            ])
+    ],
+    ann_file='data/nuscenes/bevdetv2-nuscenes-mini_infos_val.pkl',
+    type='NuScenesDataset',
+    classes=[
+        'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
+        'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
+    ],
+    modality=dict(
+        use_lidar=True,
+        use_camera=True,
+        use_radar=False,
+        use_map=False,
+        use_external=False),
+    img_info_prototype='bevdet4d',
+    multi_adj_frame_id_cfg=(1, 2, 1))
+key = 'test'
+optimizer = dict(type='AdamW', lr=0.0001, weight_decay=0.01)
+optimizer_config = dict(grad_clip=dict(max_norm=5, norm_type=2))
+lr_config = dict(
+    policy='step',
+    warmup='linear',
+    warmup_iters=200,
+    warmup_ratio=0.001,
+    gamma=0.5,
+    step=[5])
+runner = dict(type='EpochBasedRunner', max_epochs=24)
+custom_hooks = [
+    dict(type='MEGVIIEMAHook', init_updates=10560, priority='NORMAL'),
+    dict(type='SequentialControlHook', temporal_start_epoch=3)
+]
+fp16 = dict(loss_scale='dynamic')
+gpu_ids = range(0, 8)
+
+2024-05-11 14:14:26,372 - mmdet - INFO - Set random seed to 0, deterministic: False
+2024-05-11 14:14:27,446 - mmdet - INFO - initialize SECOND with init_cfg {'type': 'Kaiming', 'layer': 'Conv2d'}
+2024-05-11 14:14:27,480 - mmdet - INFO - initialize SECONDFPN with init_cfg [{'type': 'Kaiming', 'layer': 'ConvTranspose2d'}, {'type': 'Constant', 'layer': 'NaiveSyncBatchNorm2d', 'val': 1.0}]
+2024-05-11 14:14:27,488 - mmdet - INFO - initialize ResNet with init_cfg {'type': 'Pretrained', 'checkpoint': 'torchvision://resnet50'}
+2024-05-11 14:14:27,488 - mmcv - INFO - load model from: torchvision://resnet50
+2024-05-11 14:14:27,488 - mmcv - INFO - load checkpoint from torchvision path: torchvision://resnet50
+2024-05-11 14:14:33,145 - mmcv - WARNING - The model and loaded state dict do not match exactly
+
+unexpected key in source state_dict: fc.weight, fc.bias
+
+2024-05-11 14:14:33,169 - mmdet - INFO - initialize CustomFPN with init_cfg {'type': 'Xavier', 'layer': 'Conv2d', 'distribution': 'uniform'}
+2024-05-11 14:14:33,229 - mmdet - INFO - Model:
+MySABEV(
+  (pts_voxel_layer): Voxelization(voxel_size=[0.2, 0.2, 8], point_cloud_range=[-51.2, -51.2, -5, 51.2, 51.2, 3], max_num_points=20, max_voxels=(30000, 40000), deterministic=True)
+  (pts_voxel_encoder): PillarFeatureNet(
+    (pfn_layers): ModuleList(
+      (0): PFNLayer(
+        (norm): BatchNorm1d(64, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (linear): Linear(in_features=11, out_features=64, bias=False)
+      )
+    )
+  )
+  (pts_middle_encoder): PointPillarsScatter()
+  (pts_backbone): SECOND(
+    (blocks): ModuleList(
+      (0): Sequential(
+        (0): Conv2d(64, 64, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
+        (1): BatchNorm2d(64, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (2): ReLU(inplace=True)
+        (3): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (4): BatchNorm2d(64, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (5): ReLU(inplace=True)
+        (6): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (7): BatchNorm2d(64, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (8): ReLU(inplace=True)
+        (9): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (10): BatchNorm2d(64, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (11): ReLU(inplace=True)
+      )
+      (1): Sequential(
+        (0): Conv2d(64, 128, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
+        (1): BatchNorm2d(128, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (2): ReLU(inplace=True)
+        (3): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (4): BatchNorm2d(128, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (5): ReLU(inplace=True)
+        (6): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (7): BatchNorm2d(128, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (8): ReLU(inplace=True)
+        (9): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (10): BatchNorm2d(128, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (11): ReLU(inplace=True)
+        (12): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (13): BatchNorm2d(128, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (14): ReLU(inplace=True)
+        (15): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (16): BatchNorm2d(128, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (17): ReLU(inplace=True)
+      )
+      (2): Sequential(
+        (0): Conv2d(128, 256, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
+        (1): BatchNorm2d(256, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (2): ReLU(inplace=True)
+        (3): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (4): BatchNorm2d(256, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (5): ReLU(inplace=True)
+        (6): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (7): BatchNorm2d(256, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (8): ReLU(inplace=True)
+        (9): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (10): BatchNorm2d(256, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (11): ReLU(inplace=True)
+        (12): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (13): BatchNorm2d(256, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (14): ReLU(inplace=True)
+        (15): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (16): BatchNorm2d(256, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (17): ReLU(inplace=True)
+      )
+    )
+  )
+  init_cfg={'type': 'Kaiming', 'layer': 'Conv2d'}
+  (pts_neck): SECONDFPN(
+    (deblocks): ModuleList(
+      (0): Sequential(
+        (0): Conv2d(64, 128, kernel_size=(2, 2), stride=(2, 2), bias=False)
+        (1): BatchNorm2d(128, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (2): ReLU(inplace=True)
+      )
+      (1): Sequential(
+        (0): Conv2d(128, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (1): BatchNorm2d(128, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (2): ReLU(inplace=True)
+      )
+      (2): Sequential(
+        (0): ConvTranspose2d(256, 128, kernel_size=(2, 2), stride=(2, 2), bias=False)
+        (1): BatchNorm2d(128, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+        (2): ReLU(inplace=True)
+      )
+    )
+  )
+  init_cfg=[{'type': 'Kaiming', 'layer': 'ConvTranspose2d'}, {'type': 'Constant', 'layer': 'NaiveSyncBatchNorm2d', 'val': 1.0}]
+  (pts_bbox_head): CenterHead(
+    (loss_cls): GaussianFocalLoss()
+    (loss_bbox): L1Loss()
+    (shared_conv): ConvModule(
+      (conv): Conv2d(384, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (activate): ReLU(inplace=True)
+    )
+    (task_heads): ModuleList(
+      (0): SeparateHead(
+        (reg): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 2, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (height): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 1, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (dim): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 3, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (rot): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 2, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (vel): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 2, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (heatmap): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 1, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+      )
+      init_cfg={'type': 'Kaiming', 'layer': 'Conv2d'}
+      (1): SeparateHead(
+        (reg): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 2, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (height): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 1, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (dim): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 3, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (rot): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 2, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (vel): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 2, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (heatmap): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 2, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+      )
+      init_cfg={'type': 'Kaiming', 'layer': 'Conv2d'}
+      (2): SeparateHead(
+        (reg): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 2, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (height): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 1, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (dim): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 3, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (rot): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 2, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (vel): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 2, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (heatmap): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 2, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+      )
+      init_cfg={'type': 'Kaiming', 'layer': 'Conv2d'}
+      (3): SeparateHead(
+        (reg): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 2, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (height): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 1, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (dim): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 3, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (rot): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 2, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (vel): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 2, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (heatmap): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 1, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+      )
+      init_cfg={'type': 'Kaiming', 'layer': 'Conv2d'}
+      (4): SeparateHead(
+        (reg): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 2, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (height): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 1, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (dim): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 3, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (rot): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 2, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (vel): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 2, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (heatmap): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 2, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+      )
+      init_cfg={'type': 'Kaiming', 'layer': 'Conv2d'}
+      (5): SeparateHead(
+        (reg): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 2, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (height): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 1, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (dim): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 3, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (rot): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 2, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (vel): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 2, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (heatmap): Sequential(
+          (0): ConvModule(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (activate): ReLU(inplace=True)
+          )
+          (1): Conv2d(64, 2, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+      )
+      init_cfg={'type': 'Kaiming', 'layer': 'Conv2d'}
+    )
+  )
+  (img_backbone): ResNet(
+    (conv1): Conv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+    (bn1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (relu): ReLU(inplace=True)
+    (maxpool): MaxPool2d(kernel_size=3, stride=2, padding=1, dilation=1, ceil_mode=False)
+    (layer1): ResLayer(
+      (0): Bottleneck(
+        (conv1): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv3): Conv2d(64, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+        (downsample): Sequential(
+          (0): Conv2d(64, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+      (1): Bottleneck(
+        (conv1): Conv2d(256, 64, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv3): Conv2d(64, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+      )
+      (2): Bottleneck(
+        (conv1): Conv2d(256, 64, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv3): Conv2d(64, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+      )
+    )
+    (layer2): ResLayer(
+      (0): Bottleneck(
+        (conv1): Conv2d(256, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(128, 128, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv3): Conv2d(128, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+        (downsample): Sequential(
+          (0): Conv2d(256, 512, kernel_size=(1, 1), stride=(2, 2), bias=False)
+          (1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+      (1): Bottleneck(
+        (conv1): Conv2d(512, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv3): Conv2d(128, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+      )
+      (2): Bottleneck(
+        (conv1): Conv2d(512, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv3): Conv2d(128, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+      )
+      (3): Bottleneck(
+        (conv1): Conv2d(512, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv3): Conv2d(128, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+      )
+    )
+    (layer3): ResLayer(
+      (0): Bottleneck(
+        (conv1): Conv2d(512, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(256, 256, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv3): Conv2d(256, 1024, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+        (downsample): Sequential(
+          (0): Conv2d(512, 1024, kernel_size=(1, 1), stride=(2, 2), bias=False)
+          (1): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+      (1): Bottleneck(
+        (conv1): Conv2d(1024, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv3): Conv2d(256, 1024, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+      )
+      (2): Bottleneck(
+        (conv1): Conv2d(1024, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv3): Conv2d(256, 1024, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+      )
+      (3): Bottleneck(
+        (conv1): Conv2d(1024, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv3): Conv2d(256, 1024, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+      )
+      (4): Bottleneck(
+        (conv1): Conv2d(1024, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv3): Conv2d(256, 1024, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+      )
+      (5): Bottleneck(
+        (conv1): Conv2d(1024, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv3): Conv2d(256, 1024, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+      )
+    )
+    (layer4): ResLayer(
+      (0): Bottleneck(
+        (conv1): Conv2d(1024, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(512, 512, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv3): Conv2d(512, 2048, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(2048, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+        (downsample): Sequential(
+          (0): Conv2d(1024, 2048, kernel_size=(1, 1), stride=(2, 2), bias=False)
+          (1): BatchNorm2d(2048, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+      (1): Bottleneck(
+        (conv1): Conv2d(2048, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv3): Conv2d(512, 2048, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(2048, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+      )
+      (2): Bottleneck(
+        (conv1): Conv2d(2048, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv3): Conv2d(512, 2048, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(2048, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+      )
+    )
+  )
+  init_cfg={'type': 'Pretrained', 'checkpoint': 'torchvision://resnet50'}
+  (img_neck): CustomFPN(
+    (lateral_convs): ModuleList(
+      (0): ConvModule(
+        (conv): Conv2d(1024, 512, kernel_size=(1, 1), stride=(1, 1))
+      )
+      (1): ConvModule(
+        (conv): Conv2d(2048, 512, kernel_size=(1, 1), stride=(1, 1))
+      )
+    )
+    (fpn_convs): ModuleList(
+      (0): ConvModule(
+        (conv): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      )
+    )
+  )
+  init_cfg={'type': 'Xavier', 'layer': 'Conv2d', 'distribution': 'uniform'}
+  (img_view_transformer): SABEVPool(
+    (depth_net): DepthNet(
+      (reduce_conv): Sequential(
+        (0): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        (1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (2): ReLU(inplace=True)
+      )
+      (context_conv): Conv2d(512, 80, kernel_size=(1, 1), stride=(1, 1))
+      (bn): BatchNorm1d(27, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (depth_mlp): Mlp(
+        (fc1): Linear(in_features=27, out_features=512, bias=True)
+        (act): ReLU()
+        (drop1): Dropout(p=0.0, inplace=False)
+        (fc2): Linear(in_features=512, out_features=512, bias=True)
+        (drop2): Dropout(p=0.0, inplace=False)
+      )
+      (depth_se): SELayer(
+        (conv_reduce): Conv2d(512, 512, kernel_size=(1, 1), stride=(1, 1))
+        (act1): ReLU()
+        (conv_expand): Conv2d(512, 512, kernel_size=(1, 1), stride=(1, 1))
+        (gate): Sigmoid()
+      )
+      (context_mlp): Mlp(
+        (fc1): Linear(in_features=27, out_features=512, bias=True)
+        (act): ReLU()
+        (drop1): Dropout(p=0.0, inplace=False)
+        (fc2): Linear(in_features=512, out_features=512, bias=True)
+        (drop2): Dropout(p=0.0, inplace=False)
+      )
+      (context_se): SELayer(
+        (conv_reduce): Conv2d(512, 512, kernel_size=(1, 1), stride=(1, 1))
+        (act1): ReLU()
+        (conv_expand): Conv2d(512, 512, kernel_size=(1, 1), stride=(1, 1))
+        (gate): Sigmoid()
+      )
+      (depth_conv): Sequential(
+        (0): BasicBlock(
+          (conv1): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv2): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn2): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (relu): ReLU(inplace=True)
+        )
+        (1): BasicBlock(
+          (conv1): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv2): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn2): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (relu): ReLU(inplace=True)
+        )
+        (2): BasicBlock(
+          (conv1): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv2): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn2): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (relu): ReLU(inplace=True)
+        )
+        (3): ASPP(
+          (aspp1): _ASPPModule(
+            (atrous_conv): Conv2d(512, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (relu): ReLU()
+          )
+          (aspp2): _ASPPModule(
+            (atrous_conv): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(6, 6), dilation=(6, 6), bias=False)
+            (bn): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (relu): ReLU()
+          )
+          (aspp3): _ASPPModule(
+            (atrous_conv): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(12, 12), dilation=(12, 12), bias=False)
+            (bn): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (relu): ReLU()
+          )
+          (aspp4): _ASPPModule(
+            (atrous_conv): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(18, 18), dilation=(18, 18), bias=False)
+            (bn): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (relu): ReLU()
+          )
+          (global_avg_pool): Sequential(
+            (0): AdaptiveAvgPool2d(output_size=(1, 1))
+            (1): Conv2d(512, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (2): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+            (3): ReLU()
+          )
+          (conv1): Conv2d(2560, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (relu): ReLU()
+          (dropout): Dropout(p=0.5, inplace=False)
+        )
+        (4): Conv2d(512, 120, kernel_size=(1, 1), stride=(1, 1))
+      )
+    )
+  )
+  (img_bev_encoder_backbone): CustomResNet(
+    (layers): Sequential(
+      (0): Sequential(
+        (0): BasicBlock(
+          (conv1): Conv2d(160, 160, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
+          (bn1): BatchNorm2d(160, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv2): Conv2d(160, 160, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn2): BatchNorm2d(160, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (relu): ReLU(inplace=True)
+          (downsample): Conv2d(160, 160, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
+        )
+        (1): BasicBlock(
+          (conv1): Conv2d(160, 160, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn1): BatchNorm2d(160, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv2): Conv2d(160, 160, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn2): BatchNorm2d(160, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (relu): ReLU(inplace=True)
+        )
+      )
+      (1): Sequential(
+        (0): BasicBlock(
+          (conv1): Conv2d(160, 320, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
+          (bn1): BatchNorm2d(320, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv2): Conv2d(320, 320, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn2): BatchNorm2d(320, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (relu): ReLU(inplace=True)
+          (downsample): Conv2d(160, 320, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
+        )
+        (1): BasicBlock(
+          (conv1): Conv2d(320, 320, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn1): BatchNorm2d(320, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv2): Conv2d(320, 320, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn2): BatchNorm2d(320, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (relu): ReLU(inplace=True)
+        )
+      )
+      (2): Sequential(
+        (0): BasicBlock(
+          (conv1): Conv2d(320, 640, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
+          (bn1): BatchNorm2d(640, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv2): Conv2d(640, 640, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn2): BatchNorm2d(640, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (relu): ReLU(inplace=True)
+          (downsample): Conv2d(320, 640, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
+        )
+        (1): BasicBlock(
+          (conv1): Conv2d(640, 640, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn1): BatchNorm2d(640, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv2): Conv2d(640, 640, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn2): BatchNorm2d(640, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (relu): ReLU(inplace=True)
+        )
+      )
+    )
+  )
+  (img_bev_encoder_neck): FPN_LSS(
+    (up): Upsample(scale_factor=4.0, mode=bilinear)
+    (conv): Sequential(
+      (0): Conv2d(800, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (2): ReLU(inplace=True)
+      (3): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (4): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (5): ReLU(inplace=True)
+    )
+    (up2): Sequential(
+      (0): Upsample(scale_factor=2.0, mode=bilinear)
+      (1): Conv2d(512, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (2): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (3): ReLU(inplace=True)
+      (4): Conv2d(256, 256, kernel_size=(1, 1), stride=(1, 1))
+    )
+  )
+  (pre_process_net): CustomResNet(
+    (layers): Sequential(
+      (0): Sequential(
+        (0): BasicBlock(
+          (conv1): Conv2d(80, 80, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn1): BatchNorm2d(80, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv2): Conv2d(80, 80, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn2): BatchNorm2d(80, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (relu): ReLU(inplace=True)
+          (downsample): Conv2d(80, 80, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (1): BasicBlock(
+          (conv1): Conv2d(80, 80, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn1): BatchNorm2d(80, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv2): Conv2d(80, 80, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn2): BatchNorm2d(80, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (relu): ReLU(inplace=True)
+        )
+      )
+    )
+  )
+  (seblock): SE_Block(
+    (att): Sequential(
+      (0): AdaptiveAvgPool2d(output_size=1)
+      (1): Conv2d(384, 384, kernel_size=(1, 1), stride=(1, 1))
+      (2): Sigmoid()
+    )
+  )
+  (reduc_conv): ConvModule(
+    (conv): Conv2d(640, 384, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+    (bn): BatchNorm2d(384, eps=0.001, momentum=0.01, affine=True, track_running_stats=True)
+    (activate): ReLU()
+  )
+)
+2024-05-11 14:14:35,087 - mmdet - INFO - load checkpoint from local path: work_dirs/sabev-r50/epoch_24_ema.pth
+2024-05-11 14:14:37,479 - mmdet - WARNING - The model and loaded state dict do not match exactly
+
+size mismatch for pts_bbox_head.shared_conv.conv.weight: copying a param with shape torch.Size([64, 256, 3, 3]) from checkpoint, the shape in current model is torch.Size([64, 384, 3, 3]).
+missing keys in source state_dict: pts_voxel_encoder.pfn_layers.0.norm.weight, pts_voxel_encoder.pfn_layers.0.norm.bias, pts_voxel_encoder.pfn_layers.0.norm.running_mean, pts_voxel_encoder.pfn_layers.0.norm.running_var, pts_voxel_encoder.pfn_layers.0.linear.weight, pts_backbone.blocks.0.0.weight, pts_backbone.blocks.0.1.weight, pts_backbone.blocks.0.1.bias, pts_backbone.blocks.0.1.running_mean, pts_backbone.blocks.0.1.running_var, pts_backbone.blocks.0.3.weight, pts_backbone.blocks.0.4.weight, pts_backbone.blocks.0.4.bias, pts_backbone.blocks.0.4.running_mean, pts_backbone.blocks.0.4.running_var, pts_backbone.blocks.0.6.weight, pts_backbone.blocks.0.7.weight, pts_backbone.blocks.0.7.bias, pts_backbone.blocks.0.7.running_mean, pts_backbone.blocks.0.7.running_var, pts_backbone.blocks.0.9.weight, pts_backbone.blocks.0.10.weight, pts_backbone.blocks.0.10.bias, pts_backbone.blocks.0.10.running_mean, pts_backbone.blocks.0.10.running_var, pts_backbone.blocks.1.0.weight, pts_backbone.blocks.1.1.weight, pts_backbone.blocks.1.1.bias, pts_backbone.blocks.1.1.running_mean, pts_backbone.blocks.1.1.running_var, pts_backbone.blocks.1.3.weight, pts_backbone.blocks.1.4.weight, pts_backbone.blocks.1.4.bias, pts_backbone.blocks.1.4.running_mean, pts_backbone.blocks.1.4.running_var, pts_backbone.blocks.1.6.weight, pts_backbone.blocks.1.7.weight, pts_backbone.blocks.1.7.bias, pts_backbone.blocks.1.7.running_mean, pts_backbone.blocks.1.7.running_var, pts_backbone.blocks.1.9.weight, pts_backbone.blocks.1.10.weight, pts_backbone.blocks.1.10.bias, pts_backbone.blocks.1.10.running_mean, pts_backbone.blocks.1.10.running_var, pts_backbone.blocks.1.12.weight, pts_backbone.blocks.1.13.weight, pts_backbone.blocks.1.13.bias, pts_backbone.blocks.1.13.running_mean, pts_backbone.blocks.1.13.running_var, pts_backbone.blocks.1.15.weight, pts_backbone.blocks.1.16.weight, pts_backbone.blocks.1.16.bias, pts_backbone.blocks.1.16.running_mean, pts_backbone.blocks.1.16.running_var, pts_backbone.blocks.2.0.weight, pts_backbone.blocks.2.1.weight, pts_backbone.blocks.2.1.bias, pts_backbone.blocks.2.1.running_mean, pts_backbone.blocks.2.1.running_var, pts_backbone.blocks.2.3.weight, pts_backbone.blocks.2.4.weight, pts_backbone.blocks.2.4.bias, pts_backbone.blocks.2.4.running_mean, pts_backbone.blocks.2.4.running_var, pts_backbone.blocks.2.6.weight, pts_backbone.blocks.2.7.weight, pts_backbone.blocks.2.7.bias, pts_backbone.blocks.2.7.running_mean, pts_backbone.blocks.2.7.running_var, pts_backbone.blocks.2.9.weight, pts_backbone.blocks.2.10.weight, pts_backbone.blocks.2.10.bias, pts_backbone.blocks.2.10.running_mean, pts_backbone.blocks.2.10.running_var, pts_backbone.blocks.2.12.weight, pts_backbone.blocks.2.13.weight, pts_backbone.blocks.2.13.bias, pts_backbone.blocks.2.13.running_mean, pts_backbone.blocks.2.13.running_var, pts_backbone.blocks.2.15.weight, pts_backbone.blocks.2.16.weight, pts_backbone.blocks.2.16.bias, pts_backbone.blocks.2.16.running_mean, pts_backbone.blocks.2.16.running_var, pts_neck.deblocks.0.0.weight, pts_neck.deblocks.0.1.weight, pts_neck.deblocks.0.1.bias, pts_neck.deblocks.0.1.running_mean, pts_neck.deblocks.0.1.running_var, pts_neck.deblocks.1.0.weight, pts_neck.deblocks.1.1.weight, pts_neck.deblocks.1.1.bias, pts_neck.deblocks.1.1.running_mean, pts_neck.deblocks.1.1.running_var, pts_neck.deblocks.2.0.weight, pts_neck.deblocks.2.1.weight, pts_neck.deblocks.2.1.bias, pts_neck.deblocks.2.1.running_mean, pts_neck.deblocks.2.1.running_var, seblock.att.1.weight, seblock.att.1.bias, reduc_conv.conv.weight, reduc_conv.bn.weight, reduc_conv.bn.bias, reduc_conv.bn.running_mean, reduc_conv.bn.running_var
+
+2024-05-11 14:14:37,488 - mmdet - INFO - Start running, host: huliang@node07, work_dir: /gpfsdata/home/huliang/bev/multi-SA-BEV/work_dirs/my-sabev-r50
+2024-05-11 14:14:37,488 - mmdet - INFO - Hooks will be executed in the following order:
+before_run:
+(VERY_HIGH   ) StepLrUpdaterHook                  
+(ABOVE_NORMAL) Fp16OptimizerHook                  
+(NORMAL      ) CheckpointHook                     
+(NORMAL      ) MEGVIIEMAHook                      
+(NORMAL      ) SequentialControlHook              
+(VERY_LOW    ) TextLoggerHook                     
+(VERY_LOW    ) TensorboardLoggerHook              
+ -------------------- 
+before_train_epoch:
+(VERY_HIGH   ) StepLrUpdaterHook                  
+(NORMAL      ) SequentialControlHook              
+(NORMAL      ) DistSamplerSeedHook                
+(LOW         ) IterTimerHook                      
+(VERY_LOW    ) TextLoggerHook                     
+(VERY_LOW    ) TensorboardLoggerHook              
+ -------------------- 
+before_train_iter:
+(VERY_HIGH   ) StepLrUpdaterHook                  
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_train_iter:
+(ABOVE_NORMAL) Fp16OptimizerHook                  
+(NORMAL      ) CheckpointHook                     
+(NORMAL      ) MEGVIIEMAHook                      
+(LOW         ) IterTimerHook                      
+(VERY_LOW    ) TextLoggerHook                     
+(VERY_LOW    ) TensorboardLoggerHook              
+ -------------------- 
+after_train_epoch:
+(NORMAL      ) CheckpointHook                     
+(NORMAL      ) MEGVIIEMAHook                      
+(VERY_LOW    ) TextLoggerHook                     
+(VERY_LOW    ) TensorboardLoggerHook              
+ -------------------- 
+before_val_epoch:
+(NORMAL      ) DistSamplerSeedHook                
+(LOW         ) IterTimerHook                      
+(VERY_LOW    ) TextLoggerHook                     
+(VERY_LOW    ) TensorboardLoggerHook              
+ -------------------- 
+before_val_iter:
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_val_iter:
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_val_epoch:
+(VERY_LOW    ) TextLoggerHook                     
+(VERY_LOW    ) TensorboardLoggerHook              
+ -------------------- 
+after_run:
+(VERY_LOW    ) TextLoggerHook                     
+(VERY_LOW    ) TensorboardLoggerHook              
+ -------------------- 
+2024-05-11 14:14:37,488 - mmdet - INFO - workflow: [('train', 1)], max: 24 epochs
+2024-05-11 14:14:37,490 - mmdet - INFO - Checkpoints will be saved to /gpfsdata/home/huliang/bev/multi-SA-BEV/work_dirs/my-sabev-r50 by HardDiskBackend.
+2024-05-11 14:14:46,565 - mmcv - INFO - Reducer buckets have been rebuilt in this iteration.
+2024-05-11 14:14:59,419 - mmdet - INFO - Saving checkpoint at 1 epochs
+2024-05-11 14:15:00,732 - mmdet - INFO - Saving ema checkpoint at /gpfsdata/home/huliang/bev/multi-SA-BEV/work_dirs/my-sabev-r50/epoch_1_ema.pth
+2024-05-11 14:15:20,730 - mmdet - INFO - Saving checkpoint at 2 epochs
+2024-05-11 14:15:23,316 - mmdet - INFO - Saving ema checkpoint at /gpfsdata/home/huliang/bev/multi-SA-BEV/work_dirs/my-sabev-r50/epoch_2_ema.pth
+2024-05-11 14:15:43,179 - mmdet - INFO - Saving checkpoint at 3 epochs
+2024-05-11 14:15:45,809 - mmdet - INFO - Saving ema checkpoint at /gpfsdata/home/huliang/bev/multi-SA-BEV/work_dirs/my-sabev-r50/epoch_3_ema.pth
+2024-05-11 14:16:05,233 - mmdet - INFO - Saving checkpoint at 4 epochs
+2024-05-11 14:16:07,766 - mmdet - INFO - Saving ema checkpoint at /gpfsdata/home/huliang/bev/multi-SA-BEV/work_dirs/my-sabev-r50/epoch_4_ema.pth
+2024-05-11 14:16:28,057 - mmdet - INFO - Saving checkpoint at 5 epochs
+2024-05-11 14:16:30,653 - mmdet - INFO - Saving ema checkpoint at /gpfsdata/home/huliang/bev/multi-SA-BEV/work_dirs/my-sabev-r50/epoch_5_ema.pth
+2024-05-11 14:16:50,995 - mmdet - INFO - Saving checkpoint at 6 epochs
+2024-05-11 14:16:53,693 - mmdet - INFO - Saving ema checkpoint at /gpfsdata/home/huliang/bev/multi-SA-BEV/work_dirs/my-sabev-r50/epoch_6_ema.pth
+2024-05-11 14:17:14,759 - mmdet - INFO - Saving checkpoint at 7 epochs
+2024-05-11 14:17:17,489 - mmdet - INFO - Saving ema checkpoint at /gpfsdata/home/huliang/bev/multi-SA-BEV/work_dirs/my-sabev-r50/epoch_7_ema.pth
+2024-05-11 14:17:38,391 - mmdet - INFO - Saving checkpoint at 8 epochs
+2024-05-11 14:17:41,148 - mmdet - INFO - Saving ema checkpoint at /gpfsdata/home/huliang/bev/multi-SA-BEV/work_dirs/my-sabev-r50/epoch_8_ema.pth
+2024-05-11 14:18:01,779 - mmdet - INFO - Saving checkpoint at 9 epochs
+2024-05-11 14:18:04,454 - mmdet - INFO - Saving ema checkpoint at /gpfsdata/home/huliang/bev/multi-SA-BEV/work_dirs/my-sabev-r50/epoch_9_ema.pth
+2024-05-11 14:18:25,294 - mmdet - INFO - Saving checkpoint at 10 epochs
+2024-05-11 14:18:27,904 - mmdet - INFO - Saving ema checkpoint at /gpfsdata/home/huliang/bev/multi-SA-BEV/work_dirs/my-sabev-r50/epoch_10_ema.pth
+2024-05-11 14:18:48,217 - mmdet - INFO - Saving checkpoint at 11 epochs
+2024-05-11 14:18:50,972 - mmdet - INFO - Saving ema checkpoint at /gpfsdata/home/huliang/bev/multi-SA-BEV/work_dirs/my-sabev-r50/epoch_11_ema.pth
+2024-05-11 14:19:12,401 - mmdet - INFO - Saving checkpoint at 12 epochs
+2024-05-11 14:19:15,128 - mmdet - INFO - Saving ema checkpoint at /gpfsdata/home/huliang/bev/multi-SA-BEV/work_dirs/my-sabev-r50/epoch_12_ema.pth
+2024-05-11 14:19:35,224 - mmdet - INFO - Saving checkpoint at 13 epochs
+2024-05-11 14:19:38,094 - mmdet - INFO - Saving ema checkpoint at /gpfsdata/home/huliang/bev/multi-SA-BEV/work_dirs/my-sabev-r50/epoch_13_ema.pth
+2024-05-11 14:19:58,899 - mmdet - INFO - Saving checkpoint at 14 epochs
+2024-05-11 14:20:01,447 - mmdet - INFO - Saving ema checkpoint at /gpfsdata/home/huliang/bev/multi-SA-BEV/work_dirs/my-sabev-r50/epoch_14_ema.pth
+2024-05-11 14:20:22,125 - mmdet - INFO - Saving checkpoint at 15 epochs
+2024-05-11 14:20:24,875 - mmdet - INFO - Saving ema checkpoint at /gpfsdata/home/huliang/bev/multi-SA-BEV/work_dirs/my-sabev-r50/epoch_15_ema.pth
+2024-05-11 14:20:45,570 - mmdet - INFO - Saving checkpoint at 16 epochs
+2024-05-11 14:20:48,176 - mmdet - INFO - Saving ema checkpoint at /gpfsdata/home/huliang/bev/multi-SA-BEV/work_dirs/my-sabev-r50/epoch_16_ema.pth
+2024-05-11 14:21:08,919 - mmdet - INFO - Saving checkpoint at 17 epochs
+2024-05-11 14:21:11,555 - mmdet - INFO - Saving ema checkpoint at /gpfsdata/home/huliang/bev/multi-SA-BEV/work_dirs/my-sabev-r50/epoch_17_ema.pth
+2024-05-11 14:21:32,412 - mmdet - INFO - Saving checkpoint at 18 epochs
+2024-05-11 14:21:35,313 - mmdet - INFO - Saving ema checkpoint at /gpfsdata/home/huliang/bev/multi-SA-BEV/work_dirs/my-sabev-r50/epoch_18_ema.pth
+2024-05-11 14:21:55,673 - mmdet - INFO - Saving checkpoint at 19 epochs
+2024-05-11 14:21:58,350 - mmdet - INFO - Saving ema checkpoint at /gpfsdata/home/huliang/bev/multi-SA-BEV/work_dirs/my-sabev-r50/epoch_19_ema.pth
+2024-05-11 14:22:18,312 - mmdet - INFO - Saving checkpoint at 20 epochs
+2024-05-11 14:22:20,983 - mmdet - INFO - Saving ema checkpoint at /gpfsdata/home/huliang/bev/multi-SA-BEV/work_dirs/my-sabev-r50/epoch_20_ema.pth
+2024-05-11 14:22:41,944 - mmdet - INFO - Saving checkpoint at 21 epochs
+2024-05-11 14:22:44,671 - mmdet - INFO - Saving ema checkpoint at /gpfsdata/home/huliang/bev/multi-SA-BEV/work_dirs/my-sabev-r50/epoch_21_ema.pth
+2024-05-11 14:23:05,488 - mmdet - INFO - Saving checkpoint at 22 epochs
+2024-05-11 14:23:08,093 - mmdet - INFO - Saving ema checkpoint at /gpfsdata/home/huliang/bev/multi-SA-BEV/work_dirs/my-sabev-r50/epoch_22_ema.pth
+2024-05-11 14:23:28,803 - mmdet - INFO - Saving checkpoint at 23 epochs
+2024-05-11 14:23:31,490 - mmdet - INFO - Saving ema checkpoint at /gpfsdata/home/huliang/bev/multi-SA-BEV/work_dirs/my-sabev-r50/epoch_23_ema.pth
+2024-05-11 14:23:52,128 - mmdet - INFO - Saving checkpoint at 24 epochs
+2024-05-11 14:23:54,605 - mmdet - INFO - Saving ema checkpoint at /gpfsdata/home/huliang/bev/multi-SA-BEV/work_dirs/my-sabev-r50/epoch_24_ema.pth
