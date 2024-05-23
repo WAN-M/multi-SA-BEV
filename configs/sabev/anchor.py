@@ -138,33 +138,38 @@ model = dict(
         stride=[1,],
         backbone_output_ids=[0,]),
     pts_bbox_head=dict(
-        type='CenterHead',
+        type='Anchor3DHead',
+        num_classes=10,
         in_channels=384,
-        tasks=[
-            dict(num_class=1, class_names=['car']),
-            dict(num_class=2, class_names=['truck', 'construction_vehicle']),
-            dict(num_class=2, class_names=['bus', 'trailer']),
-            dict(num_class=1, class_names=['barrier']),
-            dict(num_class=2, class_names=['motorcycle', 'bicycle']),
-            dict(num_class=2, class_names=['pedestrian', 'traffic_cone']),
-        ],
-        common_heads=dict(
-            reg=(2, 2), height=(1, 2), dim=(3, 2), rot=(2, 2), vel=(2, 2)),
-        share_conv_channel=64,
-        bbox_coder=dict(
-            type='CenterPointBBoxCoder',
-            pc_range=point_cloud_range[:2],
-            post_center_range=[-61.2, -61.2, -10.0, 61.2, 61.2, 10.0],
-            max_num=500,
-            score_threshold=0.1,
-            out_size_factor=8,
-            voxel_size=head_voxel_size[:2],
-            code_size=9),
-        separate_head=dict(
-            type='SeparateHead', init_bias=-2.19, final_kernel=3),
-        loss_cls=dict(type='GaussianFocalLoss', reduction='mean'),
-        loss_bbox=dict(type='L1Loss', reduction='mean', loss_weight=0.25),
-        norm_bbox=True),
+        feat_channels=384,
+        use_direction_classifier=True,
+        anchor_generator=dict(
+            type='AlignedAnchor3DRangeGenerator',
+            ranges=[[-51.2, -51.2, -1.8, 51.2, 51.2, -1.8]],
+            scales=[1, 2, 4],
+            sizes=[
+                [0.8660, 2.5981, 1.],  # 1.5/sqrt(3)
+                [0.5774, 1.7321, 1.],  # 1/sqrt(3)
+                [1., 1., 1.],
+                [0.4, 0.4, 1],
+            ],
+            custom_values=[0, 0],
+            rotations=[0, 1.57],
+            reshape_out=True),
+        assigner_per_size=False,
+        diff_rad_by_sin=True,
+        dir_offset=0.7854,  # pi/4
+        dir_limit_offset=0,
+        bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder', code_size=9),
+        loss_cls=dict(
+            type='FocalLoss',
+            use_sigmoid=True,
+            gamma=2.0,
+            alpha=0.25,
+            loss_weight=1.0),
+        loss_bbox=dict(type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=1.0),
+        loss_dir=dict(
+            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=0.2)),
     # model training and testing settings
     train_cfg=dict(
         pts=dict(
@@ -222,14 +227,7 @@ train_pipeline = [
         use_dim=5,
         file_client_args=file_client_args,
         trans_ego=True,
-        use_bda=use_bda),
-    dict(
-        type='LoadPointsFromMultiSweeps',
-        sweeps_num=10,
-        load_dim=5,
-        use_dim=5,
-        file_client_args=file_client_args,
-        use_bda=use_bda),
+        use_bda=True),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectNameFilter', classes=class_names),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
@@ -255,12 +253,6 @@ test_pipeline = [
         use_dim=5,
         file_client_args=file_client_args,
         trans_ego=True),
-    dict(
-        type='LoadPointsFromMultiSweeps',
-        sweeps_num=10,
-        load_dim=5,
-        use_dim=5,
-        file_client_args=file_client_args),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),

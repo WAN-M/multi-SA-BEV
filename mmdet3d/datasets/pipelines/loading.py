@@ -135,9 +135,12 @@ class LoadPointsFromMultiSweeps(object):
                  file_client_args=dict(backend='disk'),
                  pad_empty_sweeps=False,
                  remove_close=False,
-                 test_mode=False):
+                 test_mode=False,
+                 use_bda=False):
         self.load_dim = load_dim
         self.sweeps_num = sweeps_num
+        if isinstance(use_dim, int):
+            use_dim = list(range(use_dim))
         self.use_dim = use_dim
         self.time_dim = time_dim
         assert time_dim < load_dim, \
@@ -147,6 +150,7 @@ class LoadPointsFromMultiSweeps(object):
         self.pad_empty_sweeps = pad_empty_sweeps
         self.remove_close = remove_close
         self.test_mode = test_mode
+        self.use_bda = use_bda
         assert max(use_dim) < load_dim, \
             f'Expect all used dimensions < {load_dim}, got {use_dim}'
 
@@ -193,6 +197,47 @@ class LoadPointsFromMultiSweeps(object):
         y_filt = np.abs(points_numpy[:, 1]) < radius
         not_close = np.logical_not(np.logical_and(x_filt, y_filt))
         return points[not_close]
+
+    def _draw_bev(self, pts_filename, points, corners, prefix):
+        def cal(x, y):
+            return int((x + 51.2) * 10), int((y + 51.2) * 10)
+        
+        import cv2
+        import pathlib
+
+        draw_list = [
+            'n015-2018-07-24-11-22-45+0800__LIDAR_TOP__1532402932197715',
+            'n015-2018-10-02-10-50-40+0800__LIDAR_TOP__1538448761048087'
+        ]
+        
+        file_name = pts_filename.split('/')[-1].split('.')[0]
+        dir = '/gpfsdata/home/huliang/bev/multi-SA-BEV/vis_dirs/points/' + file_name + '/'
+        pathlib.Path(dir).mkdir(parents=True, exist_ok=True)
+
+        # flag = False
+        # for to_draw in draw_list:
+        #     if file_name == to_draw:
+        #         flag = True
+        #         break
+        # if not flag:
+        #     return
+
+        img = np.zeros((1024, 1024, 3), dtype=np.uint8)
+        
+        for point in points:
+            x, y = cal(*point)
+            cv2.circle(img, (x, y), radius=1, color=(255, 255, 255), thickness=-1)
+
+        color=(0,0,255)
+        for corner in corners:
+            corner = np.array(corner[:, :2])
+            corner = [(cal(x, y)) for x, y in corner]
+            cv2.line(img, corner[0], corner[2], color, 1)
+            cv2.line(img, corner[2], corner[6], color, 1)
+            cv2.line(img, corner[6], corner[4], color, 1)
+            cv2.line(img, corner[4], corner[0], color, 1)
+        
+        cv2.imwrite(dir + prefix + 'points_image.png', img)
 
     def __call__(self, results):
         """Call function to load multi-sweep point clouds from files.
@@ -242,6 +287,20 @@ class LoadPointsFromMultiSweeps(object):
 
         points = points.cat(sweep_points_list)
         points = points[:, self.use_dim]
+
+        translation = results['curr']['lidar2ego_translation']
+        rotation = results['curr']['lidar2ego_rotation']
+        rotate_matrix = Quaternion(rotation).rotation_matrix.T
+        points.rotate(rotate_matrix)
+        points.translate(np.array(translation))
+        if self.use_bda:
+            bda_info = results['bda_info']
+            bda_rot = bda_info['bda_rot']
+            points.rotate(bda_rot.T)
+            
+            # pts_filename = results['pts_filename']
+            # self._draw_bev(pts_filename, points.bev, results['gt_bboxes_3d'].corners, 'sweep_')
+
         results['points'] = points
         return results
 
@@ -466,11 +525,11 @@ class LoadPointsFromFile(object):
 
     def quaternion_to_rotation_matrix(self, q):
         # q 是一个包含四元数 [w, x, y, z] 值的列表或元组
-        w, x, y, z = q
-        return np.array([
-            [1 - 2*y**2 - 2*z**2,     2*x*y - 2*z*w,     2*x*z + 2*y*w],
-            [2*x*y + 2*z*w,     1 - 2*x**2 - 2*z**2,     2*y*z - 2*x*w],
-            [2*x*z - 2*y*w,     2*y*z + 2*x*w,     1 - 2*x**2 - 2*y**2]
+        w, i, j, k = q
+        return np.arraj([
+            [1 - 2*j**2 - 2*k**2,     2*i*j - 2*k*w,     2*i*k + 2*j*w],
+            [2*i*j + 2*k*w,     1 - 2*i**2 - 2*k**2,     2*j*k - 2*i*w],
+            [2*i*k - 2*j*w,     2*j*k + 2*i*w,     1 - 2*i**2 - 2*j**2]
         ])
         
 
@@ -517,27 +576,27 @@ class LoadPointsFromFile(object):
 
         # self._draw_bev(pts_filename, points.bev, results['gt_bboxes_3d'].corners, 'ori_')
 
-        if self.coord_type == 'LIDAR':
-            translation = results['curr']['lidar2ego_translation']
-            rotation = results['curr']['lidar2ego_rotation']
-            # if rotation[3] < 0:
-            #     rotation[3] = -rotation[3]
-            rotate_matrix = Quaternion(rotation).rotation_matrix.T
-            points.rotate(rotate_matrix)
-            points.translate(np.array(translation))
+        # if self.coord_type == 'LIDAR':
+        #     translation = results['curr']['lidar2ego_translation']
+        #     rotation = results['curr']['lidar2ego_rotation']
+        #     # if rotation[3] < 0:
+        #     #     rotation[3] = -rotation[3]
+        #     rotate_matrix = Quaternion(rotation).rotation_matrix.T
+        #     points.rotate(rotate_matrix)
+        #     points.translate(np.array(translation))
             # translation = results['curr']['ego2global_translation']
             # rotation = results['curr']['ego2global_rotation']
             # points.rotate(Quaternion(rotation).rotation_matrix)
             # points.translate(np.array(translation))
 
-        if self.use_bda:
-            self._draw_bev(pts_filename, points.bev, results['gt_bboxes_3d'].corners, 'pre_')
-            bda_info = results['bda_info']
-            flip_dx = bda_info['flip_dx']
-            flip_dy = bda_info['flip_dy']
-            scale_bda = bda_info['scale_bda']
-            rotate_bda = bda_info['rotate_bda']
-            bda_rot = bda_info['bda_rot']
+        # if self.use_bda:
+        #     # self._draw_bev(pts_filename, points.bev, results['gt_bboxes_3d'].corners, 'pre_')
+        #     bda_info = results['bda_info']
+        #     flip_dx = bda_info['flip_dx']
+        #     flip_dy = bda_info['flip_dy']
+        #     scale_bda = bda_info['scale_bda']
+        #     rotate_bda = bda_info['rotate_bda']
+        #     bda_rot = bda_info['bda_rot']
 
             # if flip_dx:
             #     points.flip('horizontal')
@@ -545,9 +604,9 @@ class LoadPointsFromFile(object):
             #     points.flip('vertical')
             # points.scale(scale_bda)
             # points.rotate(rotate_bda)
-            points.rotate(bda_rot)
+            # points.rotate(bda_rot.T)
         
-        self._draw_bev(pts_filename, points.bev, results['gt_bboxes_3d'].corners, 'bda_')
+        # self._draw_bev(pts_filename, points.bev, results['gt_bboxes_3d'].corners, 'bda_')
 
         results['points'] = points
 
