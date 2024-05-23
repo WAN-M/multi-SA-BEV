@@ -174,7 +174,7 @@ class SABEV(BEVDepth4D):
         gt_semantic = kwargs['gt_semantic']
         loss_depth, loss_semantic = \
             self.img_view_transformer.get_loss(img_preds, gt_depth, gt_semantic)
-        losses = dict(loss_depth=loss_depth, loss_semantic=loss_semantic)
+        losses = dict(loss_depth=loss_depth)
         with autocast(False):
             losses_pts = self.forward_pts_train(img_feats, gt_bboxes_3d,
                                                 gt_labels_3d, img_metas,

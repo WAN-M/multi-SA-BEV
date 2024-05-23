@@ -5,7 +5,7 @@ import numpy as np
 from mmcv.cnn import ConvModule
 from mmcv.runner import force_fp32
 
-from .cam_stream_lss import LiftSplatShoot
+from .bevdet import BEVDepth4D
 from .sabev import SABEV
 from mmdet.models import DETECTORS
 from torch.cuda.amp import autocast
@@ -83,28 +83,6 @@ class MySABEV(SABEV):
         pts_feats = self.extract_pts_feat(points, img_bev_feats, img_metas)
 
         if self.lift:
-            # BN, C, H, W = img_feats[0].shape
-            # batch_size = BN//self.num_views
-            # img_feats_view = img_feats[0].view(batch_size, self.num_views, C, H, W)
-            # rots = []
-            # trans = []
-            # for sample_idx in range(batch_size):
-            #     rot_list = []
-            #     trans_list = []
-            #     for mat in img_metas[sample_idx]['lidar2img']:
-            #         mat = torch.Tensor(mat).to(img_feats_view.device)
-            #         rot_list.append(mat.inverse()[:3, :3])
-            #         trans_list.append(mat.inverse()[:3, 3].view(-1))
-            #     rot_list = torch.stack(rot_list, dim=0)
-            #     trans_list = torch.stack(trans_list, dim=0)
-            #     rots.append(rot_list)
-            #     trans.append(trans_list)
-            # rots = torch.stack(rots)
-            # trans = torch.stack(trans)
-            # lidar2img_rt = img_metas[sample_idx]['lidar2img']  #### extrinsic parameters for multi-view images
-            
-            # img_bev_feat, depth_dist = self.lift_splat_shot_vis(img_feats_view, rots, trans, lidar2img_rt=lidar2img_rt, img_metas=img_metas)
-            # # print(img_bev_feat.shape, pts_feats[-1].shape)
             if pts_feats is None:
                 pts_feats = [img_bev_feat] ####cam stream only
             else:

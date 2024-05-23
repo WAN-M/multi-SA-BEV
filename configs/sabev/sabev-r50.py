@@ -274,4 +274,4 @@ custom_hooks = [
 
 fp16 = dict(loss_scale='dynamic')
 
-log_config = dict(interval=50)
+log_config = dict(interval=10)

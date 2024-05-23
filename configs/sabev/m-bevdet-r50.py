@@ -37,7 +37,7 @@ grid_config = {
     'depth': [1.0, 60.0, 0.5],
 }
 
-use_bda = True
+use_bda = False
 if use_bda:
     bda_aug_conf = dict(
         rot_lim=(-22.5, 22.5),
@@ -56,13 +56,11 @@ numC_Trans = 80
 multi_adj_frame_id_cfg = (1, 1+1, 1)
 
 # load_from = 'https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/cascade_mask_rcnn_r50_fpn_coco-20e_20e_nuim/cascade_mask_rcnn_r50_fpn_coco-20e_20e_nuim_20201009_124951-40963960.pth'
-load_from = 'work_dirs/final/sabev/epoch_24_ema.pth'
+load_from = 'work_dirs/pretrained/sabev-r50.pth'
 model = dict(
-    type='MySABEV',
-    use_bev_paste=False,
-    bda_aug_conf=bda_aug_conf,
+    type='MyBEVDet',
     num_adj=len(range(*multi_adj_frame_id_cfg)),
-    se=True,
+    se=False,
     lc_fusion=True,
     camera_stream=True,
     pts_voxel_layer=dict(
@@ -115,7 +113,7 @@ model = dict(
         start_level=0,
         out_ids=[0]),
     img_view_transformer=dict(
-        type='SABEVPool',
+        type='LSSViewTransformerBEVDepth',
         grid_config=grid_config,
         input_size=data_config['input_size'],
         in_channels=512,
@@ -222,14 +220,7 @@ train_pipeline = [
         use_dim=5,
         file_client_args=file_client_args,
         trans_ego=True,
-        use_bda=use_bda),
-    dict(
-        type='LoadPointsFromMultiSweeps',
-        sweeps_num=10,
-        load_dim=5,
-        use_dim=5,
-        file_client_args=file_client_args,
-        use_bda=use_bda),
+        use_bda=True),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectNameFilter', classes=class_names),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
@@ -255,12 +246,6 @@ test_pipeline = [
         use_dim=5,
         file_client_args=file_client_args,
         trans_ego=True),
-    dict(
-        type='LoadPointsFromMultiSweeps',
-        sweeps_num=10,
-        load_dim=5,
-        use_dim=5,
-        file_client_args=file_client_args),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),
@@ -292,14 +277,14 @@ share_data_config = dict(
 
 test_data_config = dict(
     pipeline=test_pipeline,
-    ann_file=data_root + 'bevdetv2-nuscenes_infos_val.pkl')
+    ann_file=data_root + 'bevdetv2-nuscenes-mini_infos_val.pkl')
 
 data = dict(
     samples_per_gpu=4,
     workers_per_gpu=4,
     train=dict(
         data_root=data_root,
-        ann_file=data_root + 'bevdetv2-nuscenes_infos_train.pkl',
+        ann_file=data_root + 'bevdetv2-nuscenes-mini_infos_train.pkl',
         pipeline=train_pipeline,
         classes=class_names,
         test_mode=False,
@@ -343,6 +328,6 @@ fp16 = dict(loss_scale='dynamic')
 
 # checkpoint_config = dict(interval=10)
 
-log_config = dict(interval=50)
+log_config = dict(interval=10)
 
-# find_unused_parameters=True
+find_unused_parameters=True
